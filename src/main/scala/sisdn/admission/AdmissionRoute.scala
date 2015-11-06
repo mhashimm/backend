@@ -5,6 +5,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import sisdn.common.User
 import spray.json.JsonParser
 
 import scala.concurrent.ExecutionContext

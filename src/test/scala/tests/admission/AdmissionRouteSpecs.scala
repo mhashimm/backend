@@ -1,6 +1,6 @@
 package tests.admission
 
-import sisdn.admission.{AdmissionRoute, User}
+import sisdn.admission.AdmissionRoute
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
@@ -9,6 +9,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.{FlatSpec, Matchers}
 import MediaTypes._
 import headers._
+import sisdn.common.User
 
 class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
   import AdmissionRouteSpecs._

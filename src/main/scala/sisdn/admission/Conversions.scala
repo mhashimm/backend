@@ -1,6 +1,7 @@
 package sisdn.admission
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import sisdn.common.User
 import spray.json.DefaultJsonProtocol
 import scala.language.implicitConversions
 import scala.concurrent.duration.FiniteDuration

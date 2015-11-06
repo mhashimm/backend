@@ -2,6 +2,7 @@ package sisdn.admission
 
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.PersistentActor
+import sisdn.common.User
 
 class AdmissionUser(id: String, admiter: ActorRef)
   extends PersistentActor with ActorLogging {

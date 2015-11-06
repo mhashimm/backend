@@ -1,4 +1,4 @@
-package sisdn.admission
+package sisdn.common
 
 case class User(
   subject: String,

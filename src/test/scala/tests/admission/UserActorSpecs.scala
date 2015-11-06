@@ -1,12 +1,12 @@
 package tests.admission
 
-import sisdn.admission.{AdmissionUser, User, Student}
+import sisdn.admission.{AdmissionUser, Student}
 import akka.actor
 import akka.actor.{Props, ActorSystem}
 import akka.testkit._
 import org.scalatest.{BeforeAndAfterAll, Matchers, FlatSpecLike}
-import sisdn.admission.User
 import AdmissionUser.{AdmissionStatusUpdateEvt, Admit}
+import sisdn.common.User
 import scala.concurrent.duration.DurationInt
 
 class UserActorSpecs (_system: ActorSystem) extends TestKit(_system) with ImplicitSender
