@@ -1,0 +1,91 @@
+{
+  "org": "1",
+  "programId": "program1",
+  "level": 1,
+  "remarks": "some remarks",
+  "tags": "fun, notfun",
+  "gradingScale": {
+    "passMark": 2.0,
+    "grades": [
+      {
+        "value": "A",
+        "min": 85,
+        "max": 100,
+        "weight": 4
+      },
+      {
+        "value": "B",
+        "min": 80,
+        "max": 85,
+        "weight": 3.5
+      },
+      {
+        "value": "C",
+        "min": 70,
+        "max": 80,
+        "weight": 3
+      }
+    ]
+  },
+  "courses": [
+    {
+      "id": "course_id1",
+      "groupingMethod": "standard",
+      "hours": 3.5,
+      "major": true,
+      "compulsory": true,
+      "totalDegree": 100.00,
+      "gradables": [
+        {
+          "name": "exam",
+          "degree": 70
+        },
+        {
+          "name": "paper",
+          "degree": 30
+        }
+      ],
+      "gradingScale": {
+        "passMark": 2.0,
+        "grades": [
+          {
+            "value": "A",
+            "min": 85,
+            "max": 100,
+            "weight": 4
+          },
+          {
+            "value": "B",
+            "min": 80,
+            "max": 85,
+            "weight": 3.5
+          },
+          {
+            "value": "C",
+            "min": 70,
+            "max": 80,
+            "weight": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "course_id2",
+      "groupingMethod": "standard",
+      "hours": 7,
+      "major": true,
+      "compulsory": true,
+      "totalDegree": 100.00,
+      "gradables": [
+        {
+          "name": "exam",
+          "degree": 70
+        },
+        {
+          "name": "paper",
+          "degree": 30
+        }
+      ]
+    }
+  ]
+}
