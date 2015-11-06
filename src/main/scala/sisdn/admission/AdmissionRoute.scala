@@ -1,17 +1,15 @@
-package sisdn.admission.service
+package sisdn.admission
 
-import akka.actor.{Props, ActorSystem}
+//import sisdn.admission.JsonProtocol
+import akka.actor.ActorSystem
 import akka.http.scaladsl.server.{Directives, Route}
-import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import sisdn.admission.model.{User, Student}
-import sisdn.admission.service.AdmissionUser.Admit
-import sisdn.admission.utils.JsonProtocol
 import spray.json.JsonParser
+
 import scala.concurrent.ExecutionContext
-import scala.language.postfixOps
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class AdmissionRoute extends Directives with JsonProtocol {
   implicit val system = ActorSystem("admission")

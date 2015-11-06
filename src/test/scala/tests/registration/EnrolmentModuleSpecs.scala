@@ -1,4 +1,4 @@
-package registration.test
+package tests.registration
 
 import java.io.InputStream
 
@@ -6,10 +6,10 @@ import spray.json._
 
 import scala.io.Source
 import org.scalatest.{Matchers, FlatSpec}
-import registration.EnrolmentModule
+import sisdn.registration.EnrolmentModule
 
 class EnrolmentModuleSpecs extends FlatSpec with Matchers{
-  import registration.RegistrationJsonProtocol._
+  import sisdn.registration.RegistrationJsonProtocol._
 
   val stream : InputStream = getClass.getResourceAsStream( "/enrol.json")
   val moduleJson = Source.fromInputStream( stream ).mkString

@@ -1,4 +1,4 @@
-package registration
+package sisdn.registration
 
 import spray.json._
 

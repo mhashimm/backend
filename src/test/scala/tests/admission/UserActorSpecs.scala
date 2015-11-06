@@ -1,12 +1,12 @@
-package sisdn.admission.test
+package tests.admission
 
+import sisdn.admission.{AdmissionUser, User, Student}
 import akka.actor
 import akka.actor.{Props, ActorSystem}
 import akka.testkit._
 import org.scalatest.{BeforeAndAfterAll, Matchers, FlatSpecLike}
-import sisdn.admission.model.{Student, User}
-import sisdn.admission.service.AdmissionUser
-import sisdn.admission.service.AdmissionUser.{AdmissionStatusUpdateEvt, Admit}
+import sisdn.admission.User
+import AdmissionUser.{AdmissionStatusUpdateEvt, Admit}
 import scala.concurrent.duration.DurationInt
 
 class UserActorSpecs (_system: ActorSystem) extends TestKit(_system) with ImplicitSender
@@ -23,7 +23,7 @@ class UserActorSpecs (_system: ActorSystem) extends TestKit(_system) with Implic
 
   "UserActor" should "extract correct number of admission to list" in {
     user ! Admit(User("1","",None,None), students)
-    val admissions = admitor.receiveWhile(){ case ad: AdmissionStatusUpdateEvt => ad}
+    val admissions = admitor.receiveWhile(){ case a:AdmissionStatusUpdateEvt => a}
     admissions.length shouldEqual 3
   }
 

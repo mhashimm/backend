@@ -1,14 +1,13 @@
-package sisdn.admission.test
+package tests.admission
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.persistence.fsm.PersistentFSM._
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
-import sisdn.admission.model._
-import sisdn.admission.service.AdmissionFSM
+import sisdn.admission._
 import scala.language.postfixOps
-import sisdn.admission.utils.Conversions._
+import Conversions._
 
 class AdmissionFSMSpecs(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
 with FlatSpecLike with Matchers with BeforeAndAfterAll {

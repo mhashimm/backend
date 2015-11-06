@@ -1,20 +1,20 @@
-package sisdn.admission.service
+package sisdn.admission
 
 import akka.actor._
 import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
-import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import sisdn.admission.model._
-import sisdn.admission.service.AdmissionFSM._
+import sisdn.admission.AdmissionFSM._
+import sisdn.admission.Conversions._
+
 import scala.concurrent.duration._
-import scala.concurrent.{Future, ExecutionContext}
-import scala.reflect.{ClassTag, classTag}
 import scala.language.postfixOps
-import sisdn.admission.utils.Conversions._
+import scala.reflect.{ClassTag, classTag}
+
 
 class AdmissionFSM(id: String, validatorActor: ActorRef, processorActor: ActorRef)
   extends PersistentFSM[State, AdmissionData, AdmissionEvt] with ActorLogging {
+
 
   override def persistenceId: String = id
 

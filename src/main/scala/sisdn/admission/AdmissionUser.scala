@@ -1,14 +1,13 @@
-package sisdn.admission.service
+package sisdn.admission
 
-import akka.actor.{ActorRef, ActorLogging, Props}
+import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.PersistentActor
-import sisdn.admission.model._
 
 class AdmissionUser(id: String, admiter: ActorRef)
   extends PersistentActor with ActorLogging {
 
-  import AdmissionUser._
   import AdmissionStatus._
+  import AdmissionUser._
 
   override def persistenceId = id
 

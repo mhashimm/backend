@@ -1,4 +1,4 @@
-package registration
+package sisdn.registration
 
 //TODO This should be converted to xml and have xsd schema
 //TODO Does spray conversion is valid BigDecimal ????

@@ -1,4 +1,4 @@
-package sisdn.admission.model
+package sisdn.admission
 
 sealed trait ValidationData
 case object ValidAdmission extends ValidationData

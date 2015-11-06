@@ -1,4 +1,4 @@
-package sisdn.admission.model
+package sisdn.admission
 
 case class Student(
   id: String,

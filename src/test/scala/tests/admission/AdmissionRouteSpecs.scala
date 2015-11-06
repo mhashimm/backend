@@ -1,12 +1,11 @@
-package sisdn.admission.test
+package tests.admission
 
+import sisdn.admission.{AdmissionRoute, User}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
 import com.typesafe.config.ConfigFactory
-import sisdn.admission.model.User
-import sisdn.admission.service.AdmissionRoute
 import org.scalatest.{FlatSpec, Matchers}
 import MediaTypes._
 import headers._

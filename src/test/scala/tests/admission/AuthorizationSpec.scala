@@ -1,11 +1,10 @@
-package sisdn.admission.test
+package tests.admission
 
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.RequestContext
 import org.scalatest.{FlatSpec, Matchers}
 import headers._
-import sisdn.admission.utils._
 
 import scala.concurrent.Promise
 
