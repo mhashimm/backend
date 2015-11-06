@@ -20,7 +20,7 @@ class EnrolmentModuleSpecs extends FlatSpec with Matchers{
   }
 
   it should """fail for wrong "programId" element""" in {
-    val wrongModel = moduleJson.replaceAll(""""programId": "program1",""", """"programI": "program1",""")
+    val wrongModel = moduleJson.replaceAll(""""programId": "program1",""", """"p": "prog",""")
     intercept[DeserializationException]{
       JsonParser(wrongModel).convertTo[EnrolmentModule]
     }
