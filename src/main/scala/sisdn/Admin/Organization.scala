@@ -48,13 +48,11 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
 object Organization {
   def props(id: String) = Props(classOf[Organization], id)
 
-  //commands
   case class AddFaculty(user: User, faculty: Faculty)
   case class AddDepartment(user: User, department: Department)
   case class AddCourse(user: User, course: Course)
   case class AddProgram(user: User, program: Program)
 
-  //events
   sealed trait OrganizationEvt
   case class AddedFaculty(user: String, faculty: Faculty) extends OrganizationEvt
   case class AddedDepartment(user: String, department: Department) extends OrganizationEvt
