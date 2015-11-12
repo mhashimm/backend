@@ -8,7 +8,7 @@ import org.scalatest._
 import sisdn.admission._
 import scala.language.postfixOps
 import scala.concurrent.duration._
-import Conversions._
+import sisdn.common.asFiniteDuration
 
 class AdmissionFSMSpecs(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
 with FlatSpecLike with Matchers with BeforeAndAfterAll {

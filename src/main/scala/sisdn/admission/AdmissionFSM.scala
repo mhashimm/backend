@@ -5,7 +5,7 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import com.typesafe.config.ConfigFactory
 import sisdn.admission.AdmissionFSM._
-import sisdn.admission.Conversions._
+import sisdn.common._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
