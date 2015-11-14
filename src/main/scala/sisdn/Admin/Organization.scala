@@ -1,14 +1,14 @@
 package sisdn.Admin
 
-import akka.actor.{ActorLogging, Props}
+import akka.actor.{ActorSystem, Actor, ActorLogging, Props}
 import akka.persistence.PersistentActor
-import sisdn.common.User
+import sisdn.common.{SisdnInvalid, SisdnCreated, User, DuplicateEntityException}
 
 class Organization(id: String) extends PersistentActor with ActorLogging {
   import Organization._
   override def persistenceId: String = id
 
-  var state = new State
+  var state = new State(context.system)
 
   override def receiveRecover: Receive = {
     case evt: OrganizationEvt => state.update(evt)
@@ -16,32 +16,52 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
 
   override def receiveCommand: Receive = {
     case f: AddFaculty =>
-      if(state.faculties.map(_.id).contains(f.faculty.id))
-        //TODO make your own Exceptions
-        throw new Exception("Entity with this id exists")
+      if(state.faculties.map(_.id).contains(f.faculty.id)) {
+        sender() ! SisdnInvalid("Duplicate faculty")
+        log.info("Found duplicate faculty")
+      }
       else
-        persist(FacultyAdded(f.user.subject, f.faculty.copy())) { state.update }
+        persist(FacultyAdded(f.user.subject, f.faculty.copy())) { evt =>
+          state.update(evt)
+          sender() ! SisdnCreated
+          log.info(s"Added faculty ${evt.faculty.id}")
+        }
 
     case d: AddDepartment =>
-      if(state.departments.map(_.id).contains(d.department.id))
-      //TODO make your own Exceptions
-        throw new Exception("Entity with this id exists")
+      if(state.departments.map(_.id).contains(d.department.id)) {
+        sender() ! SisdnInvalid("Duplicate department")
+        log.info("Found duplicate department")
+      }
       else
-        persist(DepartmentAdded(d.user.subject, d.department.copy())) { state.update }
+        persist(DepartmentAdded(d.user.subject, d.department.copy())) { evt =>
+          state.update(evt)
+          sender() ! SisdnCreated
+          log.info(s"Added department ${evt.department.id}")
+        }
 
     case c: AddCourse =>
-      if(state.courses.map(_.id).contains(c.course.id))
-      //TODO make your own Exceptions
-        throw new Exception("Entity with this id exists")
+      if(state.courses.map(_.id).contains(c.course.id)) {
+        sender() ! SisdnInvalid("Duplicate course")
+        log.info("Found duplicate course")
+      }
       else
-        persist(CourseAdded(c.user.subject, c.course.copy())) { state.update }
+        persist(CourseAdded(c.user.subject, c.course.copy())) { evt =>
+          state.update(evt)
+          sender() ! SisdnCreated
+          log.info(s"Added course ${evt.course.id}")
+        }
 
     case p: AddProgram =>
-      if(state.programs.map(_.id).contains(p.program.id))
-      //TODO make your own Exceptions
-        throw new Exception("Entity with this id exists")
+      if(state.programs.map(_.id).contains(p.program.id)) {
+        sender() ! SisdnInvalid("duplicate program")
+        log.info("Found duplicate program")
+      }
       else
-        persist(ProgramAdded(p.user.subject, p.program.copy())) { state.update }
+        persist(ProgramAdded(p.user.subject, p.program.copy())) { evt =>
+          state.update(evt)
+          sender() ! SisdnCreated
+          log.info(s"Added program ${evt.program.id}")
+        }
   }
 }
 
@@ -60,13 +80,13 @@ object Organization {
   case class CourseAdded(user: String, course: Course) extends OrganizationEvt
   case class ProgramAdded(user: String, program: Program) extends OrganizationEvt
 
-  class State {
+  class State(system: ActorSystem) {
     def update(evt: OrganizationEvt): Unit = evt match {
-        case f: FacultyAdded => faculties = faculties + f.faculty
+        case f: FacultyAdded    => faculties = faculties + f.faculty
         case d: DepartmentAdded => departments = departments + d.department
-        case c: CourseAdded => courses = courses + c.course
-        case p: ProgramAdded => programs = programs + p.program
-        case _ => //TODO add logging
+        case c: CourseAdded     => courses = courses + c.course
+        case p: ProgramAdded    => programs = programs + p.program
+        case _                  =>
       }
 
     var faculties   = Set[Faculty]()
@@ -82,7 +102,8 @@ object Organization {
     id: String,
     title: String,
     titleTr: Option[String],
-    org: String
+    org: String,
+    active: Option[Boolean] = Some(true)
   ) extends OrganizationEntity
 
   case class Department
@@ -90,27 +111,30 @@ object Organization {
     id: String,
     title: String,
     titleTr: Option[String],
-    org: String
+    org: String,
+    active: Option[Boolean] = Some(true)
   ) extends OrganizationEntity
 
   case class Course
   (
     id: String,
-    department: String,
-    remarks: Option[String],
     title: String,
     titleTr: Option[String],
-    org: String
+    departmentId: String,
+    remarks: Option[String],
+    org: String,
+    active: Option[Boolean] = Some(true)
   ) extends OrganizationEntity
 
   case class Program
   (
     id: String,
-    creditHours: BigDecimal,
     title: String,
     titleTr: Option[String],
     facultyId: String,
     terms: Int,
-    org: String
+    creditHours: BigDecimal,
+    org: String,
+    active: Option[Boolean] = Some(true)
   ) extends OrganizationEntity
 }

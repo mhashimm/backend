@@ -5,12 +5,13 @@ import akka.http.scaladsl.model.headers.{OAuth2BearerToken, Authorization}
 import akka.http.scaladsl.model.{StatusCodes, FormData}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.ActorMaterializer
+import akka.testkit.TestProbe
 import akka.util.Timeout
 import akka.actor.Status.{Success => ActorSuccess, Failure => ActorFailure}
 import authentikat.jwt.{JwtHeader, JsonWebToken, JwtClaimsSet}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{Matchers, FlatSpec}
-import sisdn.Admin.Organization.{AddFaculty}
+import sisdn.Admin.Organization.{AddProgram, AddCourse, AddDepartment, AddFaculty}
 import scala.concurrent.duration._
 import sisdn.Admin.AdminRoutes
 import sisdn.common.{SisdnUnauthorized, SisdnCreated, SisdnInvalid, User}
@@ -27,7 +28,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
     override val userExtractor = (str:String) => User("subject", "org", Some(Set(1)), Some(Set(1)))
   }
 
-  "faculties path" should "respond to faculty creation with success status" in {
+  "post path" should "respond to faculty creation with success status" in {
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive = { case AddFaculty(_, _) => sender() ! SisdnCreated }}))).route
 
@@ -37,30 +38,42 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
     }
   }
 
-  it should "fail to create faculty with proper response" in {
+  it should "fail to create department with proper response" in {
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
-      override def receive = { case AddFaculty(_,_) =>
-        sender() ! SisdnInvalid(List("validation", "errors")) }}))).route
+      override def receive = { case AddDepartment(_,_) =>
+        sender() ! SisdnInvalid("validation", "errors") }}))).route
 
-    Post("/faculties", validFacForm).addHeader(hdr) ~> adminRoute ~> check{
+    Post("/departments", validFacForm).addHeader(hdr) ~> adminRoute ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.BadRequest
     }
   }
 
-  it should "respond with forbidden for unauthorized action" in {
+  it should "respond with forbidden for unauthorized action in courses" in {
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
-      override def receive = { case AddFaculty(_,_) =>
+      override def receive = { case AddCourse(_,_) =>
         sender() ! SisdnUnauthorized }}))).route
+    val courseForm = FormData(Map("id" -> "x", "title" -> "title", "departmentId" -> "dep", "org" -> "org"))
 
-    Post("/faculties", validFacForm).addHeader(hdr) ~> adminRoute ~> check{
+    Post("/courses", courseForm).addHeader(hdr) ~> adminRoute ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.Unauthorized
     }
   }
 
+  it should "properly unmarshal BigDecimal value in formFields" in {
+    val adminRoute = routeClass(system.actorOf(Props(creator = new Actor() {
+      override def receive = { case AddProgram(_, program) =>
+        sender() ! SisdnCreated
+        }}))).route
 
+    val programForm = FormData(Map("id" -> "x", "title" -> "title", "facultyId" -> "facId",
+      "terms" -> "8", "creditHours" -> "8.7", "org" -> "org"))
 
+    Post("/programs", programForm).addHeader(hdr) ~> adminRoute ~> check{
+      handled shouldBe true
+    }
+  }
 }
 
 object AdminRouteSpecs {
