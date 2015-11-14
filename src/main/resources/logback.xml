@@ -1,0 +1,33 @@
+<configuration scan="true" scanPeriod="30 seconds">
+  <contextName>sisdn</contextName>
+
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>target/logs/sisdn.log</file>
+    <encoder>
+      <!--<pattern>%cn %d{HH:mm:ss.SSS} %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>-->
+      <pattern>%cn %d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>target/logs/sisdn.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+      <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+        <maxFileSize>50MB</maxFileSize>
+      </timeBasedFileNamingAndTriggeringPolicy>
+    </rollingPolicy>
+  </appender>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%yellow(%cn) %date{ISO8601} %highlight(%-5level) %logger{36} %X{sourceActorSystem} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+<!--  <logger name="sisdn" level="INFO">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="FILE" />
+  </logger>
+  <logger name="sisdn" level="DEBUG" />-->
+
+  <root level="DEBUG">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

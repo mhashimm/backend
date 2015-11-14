@@ -27,7 +27,8 @@ libraryDependencies ++= Seq(
   "org.fusesource.leveldbjni"       %  "leveldbjni-all"                       % "1.8",
   "com.jason-goodwin"               %% "authentikat-jwt"                      % "0.4.1",
   "com.github.dnvriend"             %% "akka-persistence-inmemory"            % "1.1.5" % Test,
-  "com.google.protobuf"             % "protobuf-java"                         % "2.5.0"
+  "com.google.protobuf"             % "protobuf-java"                         % "2.5.0",
+  "ch.qos.logback"                  % "logback-classic"                       % "1.1.3"
 )
 
 fork := true
