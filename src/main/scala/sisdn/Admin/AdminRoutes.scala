@@ -15,9 +15,7 @@ import akka.util.Timeout
 import scala.language.postfixOps
 
 class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol {
-
   import AdminRoutes._
-
   implicit val system = ActorSystem("admin")
   implicit val mat: ActorMaterializer = ActorMaterializer()
   implicit val ec = system.dispatcher
@@ -61,8 +59,8 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
 
 object AdminRoutes {
   def adminPostPF = (reply:Any) => reply match {
-    case SisdnCreated(id) => complete(StatusCodes.Created)
-    case SisdnInvalid(id, errors) => complete(StatusCodes.custom(400, errors.mkString(" ")))
-    case SisdnUnauthorized(id) => complete(StatusCodes.Unauthorized)
+    case SisdnCreated => complete(StatusCodes.Created)
+    case SisdnInvalid(errors) => complete(StatusCodes.custom(400, errors.mkString(" ")))
+    case SisdnUnauthorized => complete(StatusCodes.Unauthorized)
   }
 }

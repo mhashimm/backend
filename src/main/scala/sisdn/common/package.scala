@@ -14,6 +14,7 @@ package object common {
   implicit def asFiniteDuration(d: java.time.Duration): FiniteDuration =
     scala.concurrent.duration.Duration.fromNanos(d.toNanos)
 
+
   trait UserJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
     implicit val userFormat = jsonFormat5(User.apply)
   }

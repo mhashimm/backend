@@ -80,11 +80,10 @@ object AdminRouteSpecs {
   val config = ConfigFactory.load()
   val key = config.getString("sisdn.key")
 
-  val claimsSet = JwtClaimsSet(
-    """{"departments" : [1], "subject" : "subject",
-      |"org" : "org", "faculties" : [1]}, "claims" : ["admin_org"] """.stripMargin)
+  val claimsSet = JwtClaimsSet("""{"departments" : [1], "subject" : "subject",
+                                 |"org" : "org", "faculties" : [1]}""".stripMargin)
   val jwt: String = JsonWebToken(JwtHeader("HS256"), claimsSet, key)
   val hdr = Authorization(OAuth2BearerToken(jwt))
 
-  val validFacForm =  Map("id" -> "id1", "title" -> "title1", "org" -> "org1", "titleTr" -> "titleTr1")
+  val validFacForm = FormData( Map("id" -> "1", "title" -> "fac1", "org" -> "org1"))
 }
