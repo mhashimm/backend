@@ -22,7 +22,7 @@ class UserActorSpecs (_system: ActorSystem) extends TestKit(_system) with Implic
   val students = List.range(1,4).flatMap{ x => List(Student(x.toHexString,"",x,x,"org")) }
 
   ignore should "extract correct number of admission to list" in {
-    user ! Admit(User("1","",None,None), students)
+    user ! Admit(User("1","",None,None, None), students)
     val admissions = admitor.receiveWhile(){ case a:AdmissionStatusUpdateEvt => a}
     admissions.length shouldEqual 3
   }

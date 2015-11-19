@@ -7,11 +7,15 @@ import scala.language.implicitConversions
 import scala.concurrent.duration.FiniteDuration
 
 package object common {
+  def uuid = java.util.UUID.randomUUID.toString
+
+  trait ObjectWithId { val id: String}
+
   implicit def asFiniteDuration(d: java.time.Duration): FiniteDuration =
     scala.concurrent.duration.Duration.fromNanos(d.toNanos)
 
   trait UserJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
-    implicit val userFormat = jsonFormat4(User.apply)
+    implicit val userFormat = jsonFormat5(User.apply)
   }
 
   implicit val sisdnBigDecimalUnmarshaller: Unmarshaller[String, BigDecimal] =
@@ -23,14 +27,15 @@ package object common {
       }
     }
 
-  sealed trait SisdnReply
-  case object SisdnAccepted extends SisdnReply
-  case object SisdnCreated extends SisdnReply
-  case object SisdnUnauthorized extends SisdnReply
-  case class SisdnInvalid(validationErrors: List[String]) extends SisdnReply
+  sealed trait SisdnReply extends ObjectWithId
+  case class SisdnPending(id: String) extends SisdnReply
+  case class SisdnAccepted(id: String) extends SisdnReply
+  case class SisdnCreated(id: String) extends SisdnReply
+  case class SisdnUnauthorized(id: String) extends SisdnReply
+  case class SisdnInvalid(id: String, validationErrors: List[String]) extends SisdnReply
   object SisdnInvalid{
-    def apply(message: String): SisdnInvalid    = new SisdnInvalid(List(message))
-    def apply(messages: String*) :SisdnInvalid  = new SisdnInvalid(messages.toList)
+    def apply(id: String, message: String): SisdnInvalid    = SisdnInvalid(id, List(message))
+    def apply(id: String, messages: String*) :SisdnInvalid  = SisdnInvalid(id, messages.toList)
   }
 
 }

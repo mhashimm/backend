@@ -2,7 +2,7 @@ package sisdn.Admin
 
 import akka.actor.{ActorSystem, Actor, ActorLogging, Props}
 import akka.persistence.PersistentActor
-import sisdn.common.{SisdnInvalid, SisdnCreated, User, DuplicateEntityException}
+import sisdn.common._
 
 class Organization(id: String) extends PersistentActor with ActorLogging {
   import Organization._
@@ -15,51 +15,51 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
   }
 
   override def receiveCommand: Receive = {
-    case f: AddFaculty =>
-      if(state.faculties.map(_.id).contains(f.faculty.id)) {
-        sender() ! SisdnInvalid("Duplicate faculty")
+    case AddFaculty(id, user, faculty) =>
+      if(state.faculties.map(_.id).contains(faculty.id)) {
+        sender() ! SisdnInvalid(id, "Duplicate faculty")
         log.info("Found duplicate faculty")
       }
       else
-        persist(FacultyAdded(f.user.subject, f.faculty.copy())) { evt =>
+        persist(FacultyAdded(id, user.subject, faculty.copy())) { evt =>
           state.update(evt)
-          sender() ! SisdnCreated
+          sender() ! SisdnCreated(id)
           log.info(s"Added faculty ${evt.faculty.id}")
         }
 
-    case d: AddDepartment =>
-      if(state.departments.map(_.id).contains(d.department.id)) {
-        sender() ! SisdnInvalid("Duplicate department")
+    case AddDepartment(id, user, department) =>
+      if(state.departments.map(_.id).contains(department.id)) {
+        sender() ! SisdnInvalid(id, "Duplicate department")
         log.info("Found duplicate department")
       }
       else
-        persist(DepartmentAdded(d.user.subject, d.department.copy())) { evt =>
+        persist(DepartmentAdded(id, user.subject, department.copy())) { evt =>
           state.update(evt)
-          sender() ! SisdnCreated
+          sender() ! SisdnCreated(id)
           log.info(s"Added department ${evt.department.id}")
         }
 
-    case c: AddCourse =>
-      if(state.courses.map(_.id).contains(c.course.id)) {
-        sender() ! SisdnInvalid("Duplicate course")
+    case AddCourse(id, user, course) =>
+      if(state.courses.map(_.id).contains(course.id)) {
+        sender() ! SisdnInvalid(id, "Duplicate course")
         log.info("Found duplicate course")
       }
       else
-        persist(CourseAdded(c.user.subject, c.course.copy())) { evt =>
+        persist(CourseAdded(id, user.subject, course.copy())) { evt =>
           state.update(evt)
-          sender() ! SisdnCreated
+          sender() ! SisdnCreated(id)
           log.info(s"Added course ${evt.course.id}")
         }
 
-    case p: AddProgram =>
-      if(state.programs.map(_.id).contains(p.program.id)) {
-        sender() ! SisdnInvalid("duplicate program")
+    case AddProgram(id, user, program) =>
+      if(state.programs.map(_.id).contains(program.id)) {
+        sender() ! SisdnInvalid(id, "duplicate program")
         log.info("Found duplicate program")
       }
       else
-        persist(ProgramAdded(p.user.subject, p.program.copy())) { evt =>
+        persist(ProgramAdded(id, user.subject, program.copy())) { evt =>
           state.update(evt)
-          sender() ! SisdnCreated
+          sender() ! SisdnCreated(id)
           log.info(s"Added program ${evt.program.id}")
         }
   }
@@ -68,17 +68,17 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
 object Organization {
   def props(id: String) = Props(classOf[Organization], id)
 
-  sealed trait OrgCmd { val user: User}
-  case class AddFaculty(user: User, faculty: Faculty) extends OrgCmd
-  case class AddDepartment(user: User, department: Department) extends OrgCmd
-  case class AddCourse(user: User, course: Course) extends OrgCmd
-  case class AddProgram(user: User, program: Program) extends OrgCmd
+  sealed trait OrgCmd extends ObjectWithId { val user: User; val entity: OrganizationEntity }
+  case class AddFaculty(id: String, user: User, entity: Faculty) extends OrgCmd
+  case class AddDepartment(id: String, user: User, entity: Department) extends OrgCmd
+  case class AddCourse(id: String, user: User, entity: Course) extends OrgCmd
+  case class AddProgram(id: String, user: User, entity: Program) extends OrgCmd
 
-  sealed trait OrganizationEvt
-  case class FacultyAdded(user: String, faculty: Faculty) extends OrganizationEvt
-  case class DepartmentAdded(user: String, department: Department) extends OrganizationEvt
-  case class CourseAdded(user: String, course: Course) extends OrganizationEvt
-  case class ProgramAdded(user: String, program: Program) extends OrganizationEvt
+  sealed trait OrganizationEvt extends ObjectWithId
+  case class FacultyAdded(id: String, user: String, faculty: Faculty) extends OrganizationEvt
+  case class DepartmentAdded(id: String, user: String, department: Department) extends OrganizationEvt
+  case class CourseAdded(id: String, user: String, course: Course) extends OrganizationEvt
+  case class ProgramAdded(id: String, user: String, program: Program) extends OrganizationEvt
 
   class State(system: ActorSystem) {
     def update(evt: OrganizationEvt): Unit = evt match {
@@ -95,7 +95,10 @@ object Organization {
     var programs    = Set[Program]()
   }
 
-  sealed trait OrganizationEntity
+  sealed trait OrganizationEntity {val id: String
+    val title: String
+    val titleTr: Option[String]
+    val org: String}
 
   case class Faculty
   (
@@ -111,6 +114,7 @@ object Organization {
     id: String,
     title: String,
     titleTr: Option[String],
+    facultyId: String,
     org: String,
     active: Option[Boolean] = Some(true)
   ) extends OrganizationEntity
@@ -121,6 +125,7 @@ object Organization {
     title: String,
     titleTr: Option[String],
     departmentId: String,
+    facultyId: String,
     remarks: Option[String],
     org: String,
     active: Option[Boolean] = Some(true)

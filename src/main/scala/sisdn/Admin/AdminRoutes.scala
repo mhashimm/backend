@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.{Directives, Route}
 import Directives._
 import akka.stream.ActorMaterializer
 import sisdn.Admin.Organization._
-import sisdn.common.{UserJsonProtocol, User, SisdnCreated, SisdnInvalid, SisdnUnauthorized}
+import sisdn.common.{UserJsonProtocol, User, SisdnCreated, SisdnInvalid, SisdnUnauthorized, uuid}
 import sisdn.common.sisdnBigDecimalUnmarshaller
 import spray.json.JsonParser
 import scala.concurrent.duration._
@@ -30,22 +30,22 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
   path("faculties") {
     post {
       formFields(('id, 'title, 'titleTr.?, 'org, 'active.as[Boolean].?)).as(Faculty) { faculty =>
-        onSuccess(router ? AddFaculty(user, faculty)) { adminPostPF }
+        onSuccess(router ? AddFaculty(uuid, user, faculty)) { adminPostPF }
       }
     }
   } ~
   path("departments") {
     post {
-      formFields(('id, 'title, 'titleTr.?, 'org, 'active.as[Boolean].?)).as(Department) { department =>
-        onSuccess(router ? AddDepartment(user, department)) { adminPostPF }
+      formFields(('id, 'title, 'titleTr.?, 'facultyId, 'org, 'active.as[Boolean].?)).as(Department) { department =>
+        onSuccess(router ? AddDepartment(uuid, user, department)) { adminPostPF }
       }
     }
   } ~
   path("courses") {
     post {
-      formFields(('id, 'title, 'titleTr.?, 'departmentId, 'remarks.?, 'org,
+      formFields(('id, 'title, 'titleTr.?, 'departmentId, 'facultyId, 'remarks.?, 'org,
         'active.as[Boolean].?)).as(Course) { course =>
-        onSuccess(router ? AddCourse(user, course)) { adminPostPF }
+        onSuccess(router ? AddCourse(uuid, user, course)) { adminPostPF }
       }
     }
   } ~
@@ -53,7 +53,7 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
     post {
       formFields(('id, 'title, 'titleTr.?, 'facultyId, 'terms.as[Int],
         'creditHours.as[BigDecimal], 'org, 'active.as[Boolean].?)).as(Program) { program =>
-        onSuccess(router ? AddProgram(user, program)) { adminPostPF }
+        onSuccess(router ? AddProgram(uuid, user, program)) { adminPostPF }
       }
     }}}
   }
@@ -61,8 +61,8 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
 
 object AdminRoutes {
   def adminPostPF = (reply:Any) => reply match {
-    case SisdnCreated => complete(StatusCodes.Created)
-    case SisdnInvalid(errors) => complete(StatusCodes.custom(400, errors.mkString(" ")))
-    case SisdnUnauthorized => complete(StatusCodes.Unauthorized)
+    case SisdnCreated(id) => complete(StatusCodes.Created)
+    case SisdnInvalid(id, errors) => complete(StatusCodes.custom(400, errors.mkString(" ")))
+    case SisdnUnauthorized(id) => complete(StatusCodes.Unauthorized)
   }
 }
