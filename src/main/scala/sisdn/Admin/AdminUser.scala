@@ -20,7 +20,7 @@ class AdminUser(id: String, org: ActorRef) extends PersistentActor {
   override def receiveCommand: Receive = {
     case e: OrgCmd => {
       if(userHasClaim(e.user, e.entity) ){
-        persist(e){ evt => evt}
+        persist(e){ evt => context.system.log.info(s"$evt")}
       }
     }
   }

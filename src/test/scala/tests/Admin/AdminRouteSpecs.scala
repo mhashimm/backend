@@ -85,5 +85,5 @@ object AdminRouteSpecs {
   val jwt: String = JsonWebToken(JwtHeader("HS256"), claimsSet, key)
   val hdr = Authorization(OAuth2BearerToken(jwt))
 
-  val validFacForm = FormData( Map("id" -> "1", "title" -> "fac1", "org" -> "org1"))
+  val validFacForm = Map("id" -> "1", "title" -> "fac1", "org" -> "org1")
 }

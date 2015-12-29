@@ -59,8 +59,8 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
 
 object AdminRoutes {
   def adminPostPF = (reply:Any) => reply match {
-    case SisdnCreated => complete(StatusCodes.Created)
-    case SisdnInvalid(errors) => complete(StatusCodes.custom(400, errors.mkString(" ")))
-    case SisdnUnauthorized => complete(StatusCodes.Unauthorized)
+    case SisdnCreated(id) => complete(StatusCodes.Created)
+    case SisdnInvalid(id, errors) => complete(StatusCodes.custom(400, errors.mkString(" ")))
+    case SisdnUnauthorized(id) => complete(StatusCodes.Unauthorized)
   }
 }
