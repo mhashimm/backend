@@ -8,8 +8,8 @@ lazy val root = (project in file(".")).settings(
 
 resolvers += "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
 
-val akkaV       = "2.4.0"
-val akkaStreamV = "1.0"
+val akkaV       = "2.4.1"
+val akkaStreamV = "2.0.1"
 val scalaTestV  = "2.2.5"
 
 libraryDependencies ++= Seq(
