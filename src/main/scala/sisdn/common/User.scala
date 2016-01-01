@@ -1,7 +1,7 @@
 package sisdn.common
 
 case class User(
-  subject: String,
+  username: String,
   org: String,
   departments: Option[Set[Int]],
   faculties: Option[Set[Int]],

@@ -16,7 +16,9 @@ class AdmissionRoute extends Directives with StudentJsonProtocol with UserJsonPr
   implicit val ec: ExecutionContext = system.dispatcher
   implicit val timeout: Timeout = 1 second
 
-  val userExtractor = (token: String) => JsonParser(token).convertTo[User]
+  def userExtractor(token: String) = {
+    JsonParser(token).convertTo[User]
+  }
 
   val route: Route = path("admit" / "v1" | "admit") {
     post {

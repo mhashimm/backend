@@ -9,10 +9,9 @@ import scala.concurrent.ExecutionContext
 class AdminRouter extends Actor with ActorLogging {
 
   override def receive: Receive = {
-    /*case cmd:OrgCmd => {
+    case cmd:OrgCmd =>
       val actor = context.actorOf(Organization.props(cmd.user.org))
       actor forward cmd
-    }*/
     case _ => log.debug("received hello"); sender() ! "hello"
   }
 }

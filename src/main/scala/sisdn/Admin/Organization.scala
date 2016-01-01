@@ -21,7 +21,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
         log.info("Found duplicate faculty")
       }
       else
-        persist(FacultyAdded(id, user.subject, faculty.copy())) { evt =>
+        persist(FacultyAdded(id, user.username, faculty.copy())) { evt =>
           state.update(evt)
           sender() ! SisdnCreated(id)
           log.info(s"Added faculty ${evt.faculty.id}")
@@ -33,7 +33,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
         log.info("Found duplicate department")
       }
       else
-        persist(DepartmentAdded(id, user.subject, department.copy())) { evt =>
+        persist(DepartmentAdded(id, user.username, department.copy())) { evt =>
           state.update(evt)
           sender() ! SisdnCreated(id)
           log.info(s"Added department ${evt.department.id}")
@@ -45,7 +45,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
         log.info("Found duplicate course")
       }
       else
-        persist(CourseAdded(id, user.subject, course.copy())) { evt =>
+        persist(CourseAdded(id, user.username, course.copy())) { evt =>
           state.update(evt)
           sender() ! SisdnCreated(id)
           log.info(s"Added course ${evt.course.id}")
@@ -57,7 +57,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
         log.info("Found duplicate program")
       }
       else
-        persist(ProgramAdded(id, user.subject, program.copy())) { evt =>
+        persist(ProgramAdded(id, user.username, program.copy())) { evt =>
           state.update(evt)
           sender() ! SisdnCreated(id)
           log.info(s"Added program ${evt.program.id}")

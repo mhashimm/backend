@@ -24,16 +24,19 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
   implicit val ec = system.dispatcher
   implicit val timeout: Timeout = 3 second
 
+  val user = User("subject", "org", Some(Set(1)), Some(Set(1)), Some(Set("")))
+
   def routeClass(actor: ActorRef) = new AdminRoutes(actor) {
-    override val userExtractor = (str:String) => User("subject", "org", Some(Set(1)), Some(Set(1)), Some(Set("")))
+    //override val userExtractor = (str:String) => User("subject", "org", Some(Set(1)), Some(Set(1)), Some(Set("")))
   }
 
   "post path" should "respond to faculty creation with success status" in {
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive = { case AddFaculty(id,_, _) => sender() ! SisdnCreated(id) }}))).route
 
-    Post("/faculties", FormData(validFacForm)).addHeader(hdr) ~> adminRoute ~> check{
+    Post("/faculties", FormData(validFacForm)).addHeader(hdr) ~> adminRoute(user) ~> check{
       handled shouldBe true
+      println(hdr.credentials.token())
       status shouldEqual StatusCodes.Created
     }
   }
@@ -43,7 +46,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
       override def receive = { case AddDepartment(_,_,_) =>
         sender() ! SisdnInvalid("validation", "errors") }}))).route
 
-    Post("/departments", FormData(validFacForm + ("facultyId" -> "facultyId1"))).addHeader(hdr) ~> adminRoute ~> check{
+    Post("/departments", FormData(validFacForm + ("facultyId" -> "facultyId1"))).addHeader(hdr) ~> adminRoute(user) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.BadRequest
     }
@@ -55,7 +58,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
         sender() ! SisdnUnauthorized(id) }}))).route
     val courseForm = FormData(validFacForm ++ Map("departmentId" -> "dep", "facultyId" -> "facultyId1"))
 
-    Post("/courses", courseForm).addHeader(hdr) ~> adminRoute ~> check{
+    Post("/courses", courseForm).addHeader(hdr) ~> adminRoute(user) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.Unauthorized
     }
@@ -70,7 +73,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
     val programForm = FormData(Map("id" -> "x", "title" -> "title", "facultyId" -> "facId",
       "terms" -> "8", "creditHours" -> "8.7", "org" -> "org"))
 
-    Post("/programs", programForm).addHeader(hdr) ~> adminRoute ~> check{
+    Post("/programs", programForm).addHeader(hdr) ~> adminRoute(user) ~> check{
       handled shouldBe true
     }
   }
