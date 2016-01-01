@@ -1,18 +1,17 @@
 package sisdn.Admin
 
-import akka.actor.{ActorSystem, ActorRef}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.server.Directives._
 import akka.pattern.ask
-import akka.http.scaladsl.server.{Directives, Route}
-import Directives._
 import akka.stream.ActorMaterializer
-import sisdn.Admin.Organization._
-import sisdn.common.{UserJsonProtocol, User, SisdnCreated, SisdnInvalid, SisdnUnauthorized, uuid}
-import sisdn.common.sisdnBigDecimalUnmarshaller
-import spray.json.JsonParser
-import scala.concurrent.duration._
 import akka.util.Timeout
+import scala.concurrent.duration._
 import scala.language.postfixOps
+import sisdn.Admin.Organization._
+import sisdn.common.{SisdnCreated, SisdnInvalid, SisdnUnauthorized, User, UserJsonProtocol, uuid}
+import sisdn.common.sisdnBigDecimalUnmarshaller
 
 class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol {
   import AdminRoutes._
@@ -21,39 +20,37 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
   implicit val ec = system.dispatcher
   implicit val timeout: Timeout = 3 second
 
-  val userExtractor = (token: String) => JsonParser(token).convertTo[User]
-
-  val route = extractCredentials { bt => provide(userExtractor(bt.get.token)) { user =>
-  system.log.info("user {} logged into admin/", user.subject)
-  path("faculties") {
-    post {
-      formFields(('id, 'title, 'titleTr.?, 'org, 'active.as[Boolean].?)).as(Faculty) { faculty =>
-        onSuccess(router ? AddFaculty(uuid, user, faculty)) { adminPostPF }
+  val route =  { user: User =>
+    path("faculties") {
+      post {
+        formFields(('id, 'title, 'titleTr.?, 'org ? user.org, 'active.as[Boolean].?)).as(Faculty) { faculty =>
+          onSuccess(router ? AddFaculty(uuid, user, faculty)) { adminPostPF }
+        }
+      }
+    } ~
+    path("departments") {
+      post {
+        formFields(('id, 'title, 'titleTr.?, 'facultyId, 'org ? user.org, 'active.as[Boolean].?)).as(Department) { department =>
+          onSuccess(router ? AddDepartment(uuid, user, department)) { adminPostPF }
+        }
+      }
+    } ~
+    path("courses") {
+      post {
+        formFields(('id, 'title, 'titleTr.?, 'departmentId, 'facultyId, 'remarks.?, 'org ? user.org,
+          'active.as[Boolean].?)).as(Course) { course =>
+          onSuccess(router ? AddCourse(uuid, user, course)) { adminPostPF }
+        }
+      }
+    } ~
+    path("programs") {
+      post {
+        formFields(('id, 'title, 'titleTr.?, 'facultyId, 'terms.as[Int],
+          'creditHours.as[BigDecimal], 'org ? user.org, 'active.as[Boolean].?)).as(Program) { program =>
+          onSuccess(router ? AddProgram(uuid, user, program)) { adminPostPF }
+        }
       }
     }
-  } ~
-  path("departments") {
-    post {
-      formFields(('id, 'title, 'titleTr.?, 'facultyId, 'org, 'active.as[Boolean].?)).as(Department) { department =>
-        onSuccess(router ? AddDepartment(uuid, user, department)) { adminPostPF }
-      }
-    }
-  } ~
-  path("courses") {
-    post {
-      formFields(('id, 'title, 'titleTr.?, 'departmentId, 'facultyId, 'remarks.?, 'org,
-        'active.as[Boolean].?)).as(Course) { course =>
-        onSuccess(router ? AddCourse(uuid, user, course)) { adminPostPF }
-      }
-    }
-  } ~
-  path("programs") {
-    post {
-      formFields(('id, 'title, 'titleTr.?, 'facultyId, 'terms.as[Int],
-        'creditHours.as[BigDecimal], 'org, 'active.as[Boolean].?)).as(Program) { program =>
-        onSuccess(router ? AddProgram(uuid, user, program)) { adminPostPF }
-      }
-    }}}
   }
 }
 

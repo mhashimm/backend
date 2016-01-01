@@ -1,4 +1,5 @@
 scalacOptions ++= Seq("-feature")
+//javaOptions  ++= Seq("-Dconfig.trace=loads")
 
 lazy val root = (project in file(".")).settings(
   name          := """sisdn""",
@@ -22,13 +23,23 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"               %% "akka-http-experimental"               % akkaStreamV,
   "com.typesafe.akka"               %% "akka-http-spray-json-experimental"    % akkaStreamV,
   "com.typesafe.akka"               %% "akka-http-testkit-experimental"       % akkaStreamV,
+  "com.typesafe"                    %  "config"                               % "1.3.0",
   "org.scalatest"                   %% "scalatest"                            % scalaTestV % Test,
   "org.iq80.leveldb"                %  "leveldb"                              % "0.7",
   "org.fusesource.leveldbjni"       %  "leveldbjni-all"                       % "1.8",
   "com.jason-goodwin"               %% "authentikat-jwt"                      % "0.4.1",
   "com.github.dnvriend"             %% "akka-persistence-inmemory"            % "1.1.5" % Test,
-  "com.google.protobuf"             % "protobuf-java"                         % "2.5.0",
-  "ch.qos.logback"                  % "logback-classic"                       % "1.1.3"
+  "com.google.protobuf"             %  "protobuf-java"                        % "2.5.0",
+  "ch.qos.logback"                  %  "logback-classic"                      % "1.1.3"
 )
 
 fork := true
+
+/* for adding additional configs
+fork in Test := true
+javaOptions in Test += "-Dconfig.resource=test.conf"
+*/
+
+//mainClass in (Compile, run) := Some("sisdn.service.ServiceRoute")
+
+//mainClass in (Compile, packageBin) := Some("sisdn.service.ServiceRoute")
