@@ -1,20 +1,16 @@
 package tests.service
 
-import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.ActorMaterializer
 import authentikat.jwt.{JsonWebToken, JwtClaimsSet, JwtHeader}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{FlatSpec, Matchers}
-import sisdn.service.ServiceRoute
 import sisdn.common.User
-import spray.json.JsonParser
+import sisdn.service.ServiceRoute
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.Future
 
 class ServiceRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
   import ServiceRouteSpecs._

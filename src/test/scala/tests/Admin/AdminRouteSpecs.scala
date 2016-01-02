@@ -1,4 +1,4 @@
-package tests.Admin
+package tests.admin
 
 import akka.actor.{Actor, ActorRef, Props}
 import akka.http.scaladsl.model.headers.{OAuth2BearerToken, Authorization}

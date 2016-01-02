@@ -1,15 +1,9 @@
 package tests.service
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.headers.{OAuth2BearerToken, Authorization}
-import akka.stream.ActorMaterializer
-import akka.util.Timeout
 import authentikat.jwt._
-import com.typesafe.config.{ConfigResolveOptions, ConfigParseOptions, ConfigFactory}
-import sisdn.common.User
-import scala.concurrent.duration._
-import org.scalatest.{Matchers, FlatSpec}
-import sisdn.service.{Authentication, ServiceRoute}
+import com.typesafe.config.ConfigFactory
+import org.scalatest.{FlatSpec, Matchers}
+import sisdn.service.Authentication
 
 class AuthenticationSpecs extends FlatSpec with Matchers {
   val theSecret = ConfigFactory.load().getString("sisdn.key")
