@@ -24,7 +24,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
   implicit val ec = system.dispatcher
   implicit val timeout: Timeout = 3 second
 
-  val user = User("subject", "org", Some(Set(1)), Some(Set(1)), Some(Set("")))
+  val user = User("subject", "org", None, None, None)
 
   def routeClass(actor: ActorRef) = new AdminRoutes(actor) {
     //override val userExtractor = (str:String) => User("subject", "org", Some(Set(1)), Some(Set(1)), Some(Set("")))

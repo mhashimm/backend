@@ -30,7 +30,8 @@ libraryDependencies ++= Seq(
   "com.jason-goodwin"               %% "authentikat-jwt"                      % "0.4.1",
   "com.github.dnvriend"             %% "akka-persistence-inmemory"            % "1.1.5" % Test,
   "com.google.protobuf"             %  "protobuf-java"                        % "2.5.0",
-  "ch.qos.logback"                  %  "logback-classic"                      % "1.1.3"
+  "ch.qos.logback"                  %  "logback-classic"                      % "1.1.3",
+  "com.nimbusds"                    %  "nimbus-jose-jwt"                      % "4.0.1"
 )
 
 fork := true

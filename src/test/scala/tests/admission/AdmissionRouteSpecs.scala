@@ -56,7 +56,7 @@ object AdmissionRouteSpecs{
   val jwt: String = JsonWebToken(JwtHeader("HS256"), claimsSet, key)
 
   val routeClass = new AdmissionRoute {
-    override def userExtractor(str:String) = User("subject", "org", Some(Set(1)), Some(Set(1)), Some(Set("")))
+    override def userExtractor(str:String) = User("subject", "org", None, None, None)
   }
 
   val admissionRoute = routeClass.route

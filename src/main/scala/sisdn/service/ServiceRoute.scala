@@ -46,7 +46,9 @@ trait ServiceRoute extends Directives with Authentication {
 }
 
 object ServiceEndpoint extends ServiceRoute {
-  val secret = ConfigFactory.load().getString("sisdn.key")
+  val config = ConfigFactory.load()
+  val secret = config.getString("sisdn.key")
+  val appEnv = config.getString("sisdn.appEnv")
 
   def main(args: Array[String]) {
     Http().bindAndHandle(serviceRoute, "localhost", 9000)
