@@ -18,7 +18,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
     case AddFaculty(id, user, faculty) =>
       if(state.faculties.map(_.id).contains(faculty.id)) {
         sender() ! SisdnInvalid(id, "Duplicate faculty")
-        log.info("Found duplicate faculty")
+        log.info(s"Found duplicate faculty ${faculty.id}")
       }
       else
         persist(FacultyAdded(id, user.username, faculty.copy())) { evt =>
@@ -27,10 +27,20 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
           log.info(s"Added faculty ${evt.faculty.id}")
         }
 
+    case UpdateFaculty(id, user, faculty) => state.faculties.find(_.id == faculty.id) match {
+      case None => sender() ! SisdnNotFound(id)
+        log.info(s"Faculty not found ${faculty.id}")
+      case Some(found) => persist(FacultyUpdated(id, user.username, faculty.copy(id = found.id, org = found.org))) { evt =>
+          state.update(evt)
+          sender() ! SisdnUpdated(id)
+          log.info(s"updated faculty ${evt.faculty.id}")
+        }
+      }
+
     case AddDepartment(id, user, department) =>
       if(state.departments.map(_.id).contains(department.id)) {
         sender() ! SisdnInvalid(id, "Duplicate department")
-        log.info("Found duplicate department")
+        log.info(s"Found duplicate department ${department.id}")
       }
       else
         persist(DepartmentAdded(id, user.username, department.copy())) { evt =>
@@ -70,12 +80,14 @@ object Organization {
 
   sealed trait OrgCmd extends ObjectWithId { val user: User; val entity: OrganizationEntity }
   case class AddFaculty(id: String, user: User, entity: Faculty) extends OrgCmd
+  case class UpdateFaculty(id: String, user: User, entity: Faculty) extends OrgCmd
   case class AddDepartment(id: String, user: User, entity: Department) extends OrgCmd
   case class AddCourse(id: String, user: User, entity: Course) extends OrgCmd
   case class AddProgram(id: String, user: User, entity: Program) extends OrgCmd
 
   sealed trait OrganizationEvt extends ObjectWithId
   case class FacultyAdded(id: String, user: String, faculty: Faculty) extends OrganizationEvt
+  case class FacultyUpdated(id: String, user: String, faculty: Faculty) extends OrganizationEvt
   case class DepartmentAdded(id: String, user: String, department: Department) extends OrganizationEvt
   case class CourseAdded(id: String, user: String, course: Course) extends OrganizationEvt
   case class ProgramAdded(id: String, user: String, program: Program) extends OrganizationEvt
@@ -83,6 +95,7 @@ object Organization {
   class State(system: ActorSystem) {
     def update(evt: OrganizationEvt): Unit = evt match {
         case f: FacultyAdded    => faculties = faculties + f.faculty
+        case f: FacultyUpdated  => faculties = faculties.filterNot(_.id == f.faculty.id) + f.faculty
         case d: DepartmentAdded => departments = departments + d.department
         case c: CourseAdded     => courses = courses + c.course
         case p: ProgramAdded    => programs = programs + p.program
@@ -95,51 +108,53 @@ object Organization {
     var programs    = Set[Program]()
   }
 
-  sealed trait OrganizationEntity {val id: String
+  sealed trait OrganizationEntity {
+    val id: String
     val title: String
     val titleTr: Option[String]
-    val org: String}
+    val org: Option[String]
+  }
 
   case class Faculty
   (
     id: String,
     title: String,
     titleTr: Option[String],
-    org: String,
+    org: Option[String],
     active: Option[Boolean] = Some(true)
   ) extends OrganizationEntity
 
   case class Department
   (
     id: String,
+    facultyId: String,
     title: String,
     titleTr: Option[String],
-    facultyId: String,
-    org: String,
+    org: Option[String],
     active: Option[Boolean] = Some(true)
   ) extends OrganizationEntity
 
   case class Course
   (
     id: String,
-    title: String,
-    titleTr: Option[String],
     departmentId: String,
     facultyId: String,
+    title: String,
+    titleTr: Option[String],
     remarks: Option[String],
-    org: String,
+    org: Option[String],
     active: Option[Boolean] = Some(true)
   ) extends OrganizationEntity
 
   case class Program
   (
     id: String,
-    title: String,
-    titleTr: Option[String],
     facultyId: String,
     terms: Int,
     creditHours: BigDecimal,
-    org: String,
+    title: String,
+    titleTr: Option[String],
+    org: Option[String],
     active: Option[Boolean] = Some(true)
   ) extends OrganizationEntity
 }

@@ -1,43 +1,45 @@
 package tests.admin
 
+import akka.actor.Status.{Failure => ActorFailure, Success => ActorSuccess}
 import akka.actor.{Actor, ActorRef, Props}
-import akka.http.scaladsl.model.headers.{OAuth2BearerToken, Authorization}
-import akka.http.scaladsl.model.{StatusCodes, FormData}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.ActorMaterializer
-import akka.testkit.TestProbe
 import akka.util.Timeout
-import akka.actor.Status.{Success => ActorSuccess, Failure => ActorFailure}
-import authentikat.jwt.{JwtHeader, JsonWebToken, JwtClaimsSet}
-import com.typesafe.config.ConfigFactory
-import org.scalatest.{Matchers, FlatSpec}
-import sisdn.Admin.Organization.{AddProgram, AddCourse, AddDepartment, AddFaculty}
+import org.scalatest.{FlatSpec, Matchers}
+import sisdn.Admin.Organization._
+import sisdn.Admin.{AdminRoutes, OrgJsonProtocol}
+import sisdn.common._
+
 import scala.concurrent.duration._
-import sisdn.Admin.AdminRoutes
-import sisdn.common.{SisdnUnauthorized, SisdnCreated, SisdnInvalid, User}
 import scala.language.postfixOps
 
-class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
-  import AdminRouteSpecs._
-
+class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest with OrgJsonProtocol {
   implicit val mat: ActorMaterializer = ActorMaterializer()
   implicit val ec = system.dispatcher
   implicit val timeout: Timeout = 3 second
 
   val user = User("subject", "org", None, None, None)
 
-  def routeClass(actor: ActorRef) = new AdminRoutes(actor) {
-    //override val userExtractor = (str:String) => User("subject", "org", Some(Set(1)), Some(Set(1)), Some(Set("")))
-  }
+  def routeClass(actor: ActorRef) = new AdminRoutes(actor)
 
-  "post path" should "respond to faculty creation with success status" in {
+  "AdminRoute" should "respond to faculty creation with success status" in {
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive = { case AddFaculty(id,_, _) => sender() ! SisdnCreated(id) }}))).route
 
-    Post("/faculties", FormData(validFacForm)).addHeader(hdr) ~> adminRoute(user) ~> check{
+    Post("/faculties", Faculty("1", "fac1", None, None)) ~> adminRoute(user) ~> check{
       handled shouldBe true
-      println(hdr.credentials.token())
       status shouldEqual StatusCodes.Created
+    }
+  }
+
+  it should "respond to Correct faculty update with success" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case UpdateFaculty(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
+
+    Put("/faculties", Faculty("1", "fac1", None, None)) ~> adminRoute(user) ~> check {
+      handled shouldBe true
+      status shouldEqual StatusCodes.OK
     }
   }
 
@@ -46,7 +48,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
       override def receive = { case AddDepartment(_,_,_) =>
         sender() ! SisdnInvalid("validation", "errors") }}))).route
 
-    Post("/departments", FormData(validFacForm + ("facultyId" -> "facultyId1"))).addHeader(hdr) ~> adminRoute(user) ~> check{
+    Post("/departments", Department("1", "dep1", "", None, None)) ~> adminRoute(user) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.BadRequest
     }
@@ -56,9 +58,8 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive = { case AddCourse(id,_,_) =>
         sender() ! SisdnUnauthorized(id) }}))).route
-    val courseForm = FormData(validFacForm ++ Map("departmentId" -> "dep", "facultyId" -> "facultyId1"))
 
-    Post("/courses", courseForm).addHeader(hdr) ~> adminRoute(user) ~> check{
+    Post("/courses", Course("1", "", "", "crs", None, None, None)) ~> adminRoute(user) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.Unauthorized
     }
@@ -66,27 +67,11 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
 
   it should "properly unmarshal BigDecimal value in formFields" in {
     val adminRoute = routeClass(system.actorOf(Props(creator = new Actor() {
-      override def receive = { case AddProgram(id, _, program) =>
+      override def receive = { case AddProgram(id, _, prog) =>
         sender() ! SisdnCreated(id)
         }}))).route
 
-    val programForm = FormData(Map("id" -> "x", "title" -> "title", "facultyId" -> "facId",
-      "terms" -> "8", "creditHours" -> "8.7", "org" -> "org"))
-
-    Post("/programs", programForm).addHeader(hdr) ~> adminRoute(user) ~> check{
-      handled shouldBe true
-    }
+    Post("/programs", Program("id", "title", 8, 8.77 ,"program", None, Some("org"))) ~>
+      adminRoute(user) ~> check{ handled shouldBe true }
   }
-}
-
-object AdminRouteSpecs {
-  val config = ConfigFactory.load()
-  val key = config.getString("sisdn.key")
-
-  val claimsSet = JwtClaimsSet("""{"departments" : [1], "subject" : "subject",
-                                 |"org" : "org", "faculties" : [1]}""".stripMargin)
-  val jwt: String = JsonWebToken(JwtHeader("HS256"), claimsSet, key)
-  val hdr = Authorization(OAuth2BearerToken(jwt))
-
-  val validFacForm = Map("id" -> "1", "title" -> "fac1", "org" -> "org1")
 }

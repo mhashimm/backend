@@ -10,10 +10,9 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import sisdn.Admin.Organization._
-import sisdn.common.{SisdnCreated, SisdnInvalid, SisdnUnauthorized, User, UserJsonProtocol, uuid}
-import sisdn.common.sisdnBigDecimalUnmarshaller
+import sisdn.common._
 
-class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol {
+class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol with OrgJsonProtocol{
   import AdminRoutes._
   implicit val system = ActorSystem("admin")
   implicit val mat: ActorMaterializer = ActorMaterializer()
@@ -23,31 +22,34 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
   val route =  { user: User =>
     path("faculties") {
       post {
-        formFields(('id, 'title, 'titleTr.?, 'org ? user.org, 'active.as[Boolean].?)).as(Faculty) { faculty =>
-          onSuccess(router ? AddFaculty(uuid, user, faculty)) { adminPostPF }
+        entity(as[Faculty]) { faculty =>
+          onSuccess(router ? AddFaculty(uuid, user, faculty.copy(org = Some(user.org)))) { adminPostPF }
+        }
+      } ~
+      put {
+        entity(as[Faculty]) { faculty =>
+          onSuccess(router ? UpdateFaculty(uuid, user, faculty.copy(org = Some(user.org)))) { adminPostPF }
         }
       }
     } ~
     path("departments") {
       post {
-        formFields(('id, 'title, 'titleTr.?, 'facultyId, 'org ? user.org, 'active.as[Boolean].?)).as(Department) { department =>
-          onSuccess(router ? AddDepartment(uuid, user, department)) { adminPostPF }
+        entity(as[Department]) { department =>
+          onSuccess(router ? AddDepartment(uuid, user, department.copy(org = Some(user.org)))) { adminPostPF }
         }
       }
     } ~
     path("courses") {
       post {
-        formFields(('id, 'title, 'titleTr.?, 'departmentId, 'facultyId, 'remarks.?, 'org ? user.org,
-          'active.as[Boolean].?)).as(Course) { course =>
-          onSuccess(router ? AddCourse(uuid, user, course)) { adminPostPF }
+        entity(as[Course]) { course =>
+          onSuccess(router ? AddCourse(uuid, user, course.copy(org = Some(user.org)))) { adminPostPF }
         }
       }
     } ~
     path("programs") {
       post {
-        formFields(('id, 'title, 'titleTr.?, 'facultyId, 'terms.as[Int],
-          'creditHours.as[BigDecimal], 'org ? user.org, 'active.as[Boolean].?)).as(Program) { program =>
-          onSuccess(router ? AddProgram(uuid, user, program)) { adminPostPF }
+        entity(as[Program]) { program =>
+          onSuccess(router ? AddProgram(uuid, user, program.copy(org = Some(user.org)))) { adminPostPF }
         }
       }
     }
@@ -57,7 +59,9 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
 object AdminRoutes {
   def adminPostPF = (reply:Any) => reply match {
     case SisdnCreated(id) => complete(StatusCodes.Created)
+    case SisdnUpdated(id) => complete(StatusCodes.OK)
     case SisdnInvalid(id, errors) => complete(StatusCodes.custom(400, errors.mkString(" ")))
     case SisdnUnauthorized(id) => complete(StatusCodes.Unauthorized)
+    case SisdnNotFound(id) => complete(StatusCodes.NotFound)
   }
 }

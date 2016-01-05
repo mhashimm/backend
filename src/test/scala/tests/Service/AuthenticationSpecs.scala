@@ -31,6 +31,7 @@ class AuthenticationSpecs extends FlatSpec with Matchers {
   }
 
   //TODO try to add jwt dynamically istead of relying on static ones
+  //this test is passing because I use an old jwt
   it should "fail for expired \"JWT\"s" in {
     val auth = new Authentication {
       override val secret: String = ConfigFactory.load().getString("sisdn.key")

@@ -33,6 +33,8 @@ package object common {
   case class SisdnAccepted(id: String) extends SisdnReply
   case class SisdnCreated(id: String) extends SisdnReply
   case class SisdnUnauthorized(id: String) extends SisdnReply
+  case class SisdnNotFound(id: String) extends SisdnReply
+  case class SisdnUpdated (id: String) extends SisdnReply
   case class SisdnInvalid(id: String, validationErrors: List[String]) extends SisdnReply
   object SisdnInvalid{
     def apply(id: String, message: String): SisdnInvalid    = SisdnInvalid(id, List(message))
