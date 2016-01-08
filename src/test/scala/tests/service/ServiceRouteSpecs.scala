@@ -52,6 +52,7 @@ object ServiceRouteSpecs {
     val config = ConfigFactory.load()
     val secret = config.getString("sisdn.key")
     val appEnv = config.getString("sisdn.appEnv")
+    val allowedOrigins = config.getString("sisdn.cors.allowed-origin")
     override val innerRoutes = { user: User =>
       onSuccess(Future.successful("")){ str =>
         complete(StatusCodes.OK)
