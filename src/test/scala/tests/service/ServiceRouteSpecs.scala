@@ -1,7 +1,7 @@
 package tests.service
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
+import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken, `Access-Control-Allow-Origin`}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import com.typesafe.config.ConfigFactory
@@ -9,6 +9,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import sisdn.common.User
 import sisdn.service.ServiceRoute
 import tests.service.jwts._
+
 import scala.concurrent.Future
 
 class ServiceRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
@@ -45,14 +46,21 @@ class ServiceRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
       handled shouldBe false
     }
   }
+
+  it should "Return AllowOrigin Header for \"Option\" request for \"CORS\"" in {
+    Options("/api") ~> Route.seal(serviceRoutes) ~> check {
+      headers(0).name shouldEqual `Access-Control-Allow-Origin`.name
+      headers(0).value shouldEqual config1.getString("sisdn.cors.allowed-origins")
+    }
+  }
 }
 
 object ServiceRouteSpecs {
+  val config1 = ConfigFactory.load()
   val serviceRoutesClass = new ServiceRoute {
-    val config = ConfigFactory.load()
-    val secret = config.getString("sisdn.key")
-    val appEnv = config.getString("sisdn.appEnv")
-    val allowedOrigins = config.getString("sisdn.cors.allowed-origin")
+    val secret = config1.getString("sisdn.key")
+    val appEnv = config1.getString("sisdn.appEnv")
+    val allowedOrigins = config1.getString("sisdn.cors.allowed-origins")
     override val innerRoutes = { user: User =>
       onSuccess(Future.successful("")){ str =>
         complete(StatusCodes.OK)

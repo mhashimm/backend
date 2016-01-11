@@ -27,7 +27,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive = { case AddFaculty(id,_, _) => sender() ! SisdnCreated(id) }}))).route
 
-    Post("/faculties", Faculty("1", "fac1", None, None)) ~> adminRoute(user) ~> check{
+    Post("/admin/faculties", Faculty("1", "fac1", None, None)) ~> adminRoute(user) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.Created
     }
@@ -37,7 +37,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive = { case UpdateFaculty(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
 
-    Put("/faculties", Faculty("1", "fac1", None, None)) ~> adminRoute(user) ~> check {
+    Put("/admin/faculties", Faculty("1", "fac1", None, None)) ~> adminRoute(user) ~> check {
       handled shouldBe true
       status shouldEqual StatusCodes.OK
     }
@@ -48,7 +48,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
       override def receive = { case AddDepartment(_,_,_) =>
         sender() ! SisdnInvalid("validation", "errors") }}))).route
 
-    Post("/departments", Department("1", "dep1", "", None, None)) ~> adminRoute(user) ~> check{
+    Post("/admin/departments", Department("1", "dep1", "", None, None)) ~> adminRoute(user) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.BadRequest
     }
@@ -59,7 +59,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
       override def receive = { case AddCourse(id,_,_) =>
         sender() ! SisdnUnauthorized(id) }}))).route
 
-    Post("/courses", Course("1", "", "", "crs", None, None, None)) ~> adminRoute(user) ~> check{
+    Post("/admin/courses", Course("1", "", "", "crs", None, None, None)) ~> adminRoute(user) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.Unauthorized
     }
@@ -71,7 +71,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
         sender() ! SisdnCreated(id)
         }}))).route
 
-    Post("/programs", Program("id", "title", 8, 8.77 ,"program", None, Some("org"))) ~>
+    Post("/admin/programs", Program("id", "title", 8, 8.77 ,"program", None, Some("org"))) ~>
       adminRoute(user) ~> check{ handled shouldBe true }
   }
 }

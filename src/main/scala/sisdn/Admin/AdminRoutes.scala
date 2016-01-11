@@ -20,36 +20,38 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
   implicit val timeout: Timeout = 3 second
 
   val route =  { user: User =>
-    path("faculties") {
-      post {
-        entity(as[Faculty]) { faculty =>
-          onSuccess(router ? AddFaculty(uuid, user, faculty.copy(org = Some(user.org)))) { adminPostPF }
+    pathPrefix("admin"){
+      path("faculties") {
+        post {
+          entity(as[Faculty]) { faculty =>
+            onSuccess(router ? AddFaculty(uuid, user, faculty.copy(org = Some(user.org)))) { adminPostPF }
+          }
+        } ~
+        put {
+          entity(as[Faculty]) { faculty =>
+            onSuccess(router ? UpdateFaculty(uuid, user, faculty.copy(org = Some(user.org)))) { adminPostPF }
+          }
         }
       } ~
-      put {
-        entity(as[Faculty]) { faculty =>
-          onSuccess(router ? UpdateFaculty(uuid, user, faculty.copy(org = Some(user.org)))) { adminPostPF }
+      path("departments") {
+        post {
+          entity(as[Department]) { department =>
+            onSuccess(router ? AddDepartment(uuid, user, department.copy(org = Some(user.org)))) { adminPostPF }
+          }
         }
-      }
-    } ~
-    path("departments") {
-      post {
-        entity(as[Department]) { department =>
-          onSuccess(router ? AddDepartment(uuid, user, department.copy(org = Some(user.org)))) { adminPostPF }
+      } ~
+      path("courses") {
+        post {
+          entity(as[Course]) { course =>
+            onSuccess(router ? AddCourse(uuid, user, course.copy(org = Some(user.org)))) { adminPostPF }
+          }
         }
-      }
-    } ~
-    path("courses") {
-      post {
-        entity(as[Course]) { course =>
-          onSuccess(router ? AddCourse(uuid, user, course.copy(org = Some(user.org)))) { adminPostPF }
-        }
-      }
-    } ~
-    path("programs") {
-      post {
-        entity(as[Program]) { program =>
-          onSuccess(router ? AddProgram(uuid, user, program.copy(org = Some(user.org)))) { adminPostPF }
+      } ~
+      path("programs") {
+        post {
+          entity(as[Program]) { program =>
+            onSuccess(router ? AddProgram(uuid, user, program.copy(org = Some(user.org)))) { adminPostPF }
+          }
         }
       }
     }
