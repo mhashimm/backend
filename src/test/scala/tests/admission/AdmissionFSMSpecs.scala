@@ -7,7 +7,8 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest._
 import sisdn.admission._
 import scala.language.postfixOps
-import Conversions._
+import scala.concurrent.duration._
+import sisdn.common.asFiniteDuration
 
 class AdmissionFSMSpecs(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
 with FlatSpecLike with Matchers with BeforeAndAfterAll {
@@ -24,9 +25,11 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
   val validTimeout = config.getDuration("validationResponseTimeout")
   val processTimeout = config.getDuration("processingAckTimeout")
 
-  def admissionFunc(id: String, valid: ActorRef, proc: ActorRef): ActorRef = system.actorOf(AdmissionFSM.props(id, valid, proc))
+  def admissionFunc(id: String, valid: ActorRef, proc: ActorRef): ActorRef =
+    system.actorOf(AdmissionFSM.props(id, valid, proc))
 
-  def admissionData(id: String) = new SubmissionData(id, Student(id, "", 1, 1, "org"), AdmissionStatus.Pending, "")
+  def admissionData(id: String) = NonEmptyAdmissionData(id, Some(Student(id, "", 1, 1, "org")),
+    AdmissionStatus.Pending, "")
 
 
   "Admission actor" should "acknowledge received and save admission" in {
@@ -39,7 +42,7 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
 
     admission.tell("state", driver.ref)
     driver.expectMsgPF(){
-      case current: SubmissionData => current.student shouldEqual aData.student
+      case current: AdmissionData => current.student shouldEqual aData.student
     }
   }
 
@@ -49,7 +52,7 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
     val admission = admissionFunc(id, valid.ref, proc.ref)
     admission.tell(SubscribeTransitionCallBack(driver.ref), driver.ref)
     admission.tell(SubmittedEvt(admissionData(id)), driver.ref)
-    valid.expectMsg(admissionData(id).student)
+    valid.expectMsg(admissionData(id).student.get)
   }
 
   it should """respond to positive validation by moving to "ValidState" """ in {
@@ -58,8 +61,8 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
     val admission = admissionFunc(id, valid.ref, proc.ref)
     admission.tell(SubscribeTransitionCallBack(driver.ref), driver.ref)
     admission.tell(SubmittedEvt(admissionData(id)), driver.ref)
-    valid.expectMsg(admissionData(id).student)
-    valid.reply(ValidatedEvt( ValidAdmission))
+    valid.expectMsg(admissionData(id).student.get)
+    valid.reply(ValidatedEvt( AdmissionValidationResponse(true, "")))
     driver.receiveN(3)
     driver.expectMsgPF(validTimeout, "") {
       case Transition(_, PendingValidationState, ValidState, _) => true
@@ -67,7 +70,7 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
 
     admission.tell("state", driver.ref)
     driver.expectMsgPF(validTimeout, "") {
-      case current: SubmissionData => current.status shouldBe AdmissionStatus.Valid
+      case current: AdmissionData => current.status shouldBe AdmissionStatus.Valid
     }
 
   }
@@ -78,8 +81,8 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
     val admission = admissionFunc(id, valid.ref, proc.ref)
     admission.tell(SubscribeTransitionCallBack(driver.ref), driver.ref)
     admission.tell(SubmittedEvt(admissionData(id)), driver.ref)
-    valid.expectMsg(admissionData(id).student)
-    valid.reply(ValidatedEvt(InvalidAdmission("")))
+    valid.expectMsg(admissionData(id).student.get)
+    valid.reply(ValidatedEvt(AdmissionValidationResponse(false, "")))
 
     driver.receiveN(3)
     driver.expectMsgPF() {
@@ -88,7 +91,7 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
 
     admission.tell("state", driver.ref)
     driver.expectMsgPF() {
-      case current: SubmissionData => current.status shouldEqual AdmissionStatus.Invalid
+      case current: AdmissionData => current.status shouldEqual AdmissionStatus.Invalid
     }
   }
 
@@ -101,28 +104,29 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
     valid.receiveN(2, validTimeout * 2)
   }
 
-  it should """move to "ValidState" after receiving confirmation from processor""" in {
+  it should """move to "InProcessingState" after receiving confirmation from processor""" in {
     val driver, valid, proc = TestProbe()
     val id = "6"
     val admission = admissionFunc(id, valid.ref, proc.ref)
     val aData = admissionData(id)
 
-    admission.tell(SubscribeTransitionCallBack(driver.ref), driver.ref)
     admission.tell(SubmittedEvt(aData), driver.ref)
 
-    valid.expectMsg(aData.student) /* and respond with*/
-    valid.reply(ValidatedEvt(ValidAdmission))
-    proc.expectMsg(aData.student)
-    proc.reply(ACK)
-    driver.receiveN(4)
+    valid.expectMsg(aData.student.get)
+    valid.reply(ValidatedEvt(AdmissionValidationResponse(true, "")))
+    proc.expectMsg(aData.student.get)
+    admission.tell(SubscribeTransitionCallBack(driver.ref), driver.ref)
+    proc.reply(ProcessedEvt(AdmissionProcessingResponse(AdmissionStatus.InProcessing, "")))
+    driver.receiveN(2)
     driver.expectMsgPF() {
       case Transition(_, ValidState, InProcessingState, _) => true
     }
 
     admission.tell("state", driver.ref)
     driver.expectMsgPF() {
-      case current: SubmissionData => current.status shouldEqual AdmissionStatus.Valid
+      case current: AdmissionData => current.status shouldEqual AdmissionStatus.InProcessing
     }
+
   }
 
   it should """stay in "ValidState" and keep retrying processor if not confirmed""" in {
@@ -133,9 +137,9 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
 
     admission.tell(SubmittedEvt(aData), driver.ref)
 
-    valid.expectMsg(aData.student)
-    valid.reply(ValidatedEvt(ValidAdmission))
-    proc.receiveN(2, validTimeout * 2)
+    valid.expectMsg(aData.student.get)
+    valid.reply(ValidatedEvt(AdmissionValidationResponse(true, "")))
+    proc.receiveN(2, validTimeout * 3)
   }
 
   it should """move to "AcceptedState" after being accepted""" in {
@@ -144,22 +148,23 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
     val admission = admissionFunc(id, valid.ref, proc.ref)
     val aData = admissionData(id)
 
-    admission.tell(SubscribeTransitionCallBack(driver.ref), driver.ref)
+
     admission.tell(SubmittedEvt(aData), driver.ref)
 
-    valid.expectMsg(aData.student)
-    valid.reply(ValidatedEvt(ValidAdmission))
-    proc.expectMsg(aData.student)
-    proc.reply(ACK)
-    proc.send(admission, ProcessedEvt(Accepted))
-    driver.receiveN(5)
+    valid.expectMsg(aData.student.get)
+    valid.reply(ValidatedEvt(AdmissionValidationResponse(true, "")))
+    proc.expectMsg(aData.student.get)
+    proc.reply(ProcessedEvt(AdmissionProcessingResponse(AdmissionStatus.InProcessing, "")))
+    admission.tell(SubscribeTransitionCallBack(driver.ref), driver.ref)
+    proc.send(admission, ProcessedEvt(AdmissionProcessingResponse(AdmissionStatus.Accepted, "")))
+    driver.receiveN(2)
     driver.expectMsgPF(processTimeout, "") {
       case Transition(_, InProcessingState, AcceptedState, _) => true
     }
 
     admission.tell("state", driver.ref)
     driver.expectMsgPF() {
-      case current: SubmissionData => current.status shouldEqual AdmissionStatus.Accepted
+      case current: AdmissionData => current.status shouldEqual AdmissionStatus.Accepted
     }
   }
 
@@ -169,22 +174,24 @@ with FlatSpecLike with Matchers with BeforeAndAfterAll {
     val admission = admissionFunc(id, valid.ref, proc.ref)
     val aData = admissionData(id)
 
-    admission.tell(SubscribeTransitionCallBack(driver.ref), driver.ref)
+
     admission.tell(SubmittedEvt(aData), driver.ref)
 
-    valid.expectMsg(aData.student)
-    valid.reply(ValidatedEvt(ValidAdmission))
-    proc.expectMsg(aData.student)
-    proc.reply(ACK)
-    proc.send(admission, ProcessedEvt(Rejected("rejected")))
-    driver.receiveN(5)
-    driver.expectMsgPF(processTimeout, "") {
+    valid.expectMsg(aData.student.get)
+    valid.reply(ValidatedEvt(AdmissionValidationResponse(true, "")))
+    proc.expectMsg(aData.student.get)
+    proc.reply(ProcessedEvt(AdmissionProcessingResponse(AdmissionStatus.InProcessing, "")))
+    admission.tell(SubscribeTransitionCallBack(driver.ref), driver.ref)
+    proc.send(admission, ProcessedEvt(AdmissionProcessingResponse(AdmissionStatus.Rejected, "rejected")))
+
+    driver.receiveN(2)
+    driver.expectMsgPF(validTimeout, "") {
       case Transition(_, InProcessingState, RejectedState, _) => true
     }
 
     admission.tell("state", driver.ref)
     driver.expectMsgPF(){
-      case current: SubmissionData => current.status shouldEqual AdmissionStatus.Rejected
+      case current: AdmissionData => current.status shouldEqual AdmissionStatus.Rejected
     }
   }
 }

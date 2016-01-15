@@ -1,6 +1,6 @@
 package tests.admission
 
-import sisdn.admission.{AdmissionRoute, User}
+import sisdn.admission.AdmissionRoute
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
@@ -9,6 +9,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.{FlatSpec, Matchers}
 import MediaTypes._
 import headers._
+import sisdn.common.User
 
 class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
   import AdmissionRouteSpecs._
@@ -55,7 +56,7 @@ object AdmissionRouteSpecs{
   val jwt: String = JsonWebToken(JwtHeader("HS256"), claimsSet, key)
 
   val routeClass = new AdmissionRoute {
-    override val userExtractor = (str:String) => User("subject", "org", Some(Set(1)), Some(Set(1)))
+    override def userExtractor(str:String) = User("subject", "org", None, None, None)
   }
 
   val admissionRoute = routeClass.route

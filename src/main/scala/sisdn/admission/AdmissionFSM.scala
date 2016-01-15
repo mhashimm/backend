@@ -5,7 +5,7 @@ import akka.persistence.fsm.PersistentFSM
 import akka.persistence.fsm.PersistentFSM.FSMState
 import com.typesafe.config.ConfigFactory
 import sisdn.admission.AdmissionFSM._
-import sisdn.admission.Conversions._
+import sisdn.common._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -28,65 +28,84 @@ class AdmissionFSM(id: String, validatorActor: ActorRef, processorActor: ActorRe
   //flag to facilitate testing
   val `Testing` = ConfigFactory.load().getBoolean("sisdn.testing")
 
-  //TODO see if you can fix non exhaustive match
   override def applyEvent(evt: AdmissionEvt, currentData: AdmissionData): AdmissionData = evt match {
-    case SubmittedEvt(data) => data.copy(status = AdmissionStatus.Pending, remarks = "")
+    case SubmittedEvt(data) => data
 
-    case ValidatedEvt(ValidAdmission) => currentData.asInstanceOf[SubmissionData].
-      copy(status = AdmissionStatus.Valid)
+    case ValidatedEvt(data) if data.valid =>
+       NonEmptyAdmissionData(stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Valid, "")
+    case ValidatedEvt(data) if !data.valid =>
+      NonEmptyAdmissionData(currentData.id, stateData.student.map(_.copy()), AdmissionStatus.Invalid, "")
 
-     case ValidatedEvt(InvalidAdmission(reason)) => currentData.asInstanceOf[SubmissionData].
-       copy(remarks = reason, status = AdmissionStatus.Invalid)
+    case ProcessedEvt(data) if data.status == AdmissionStatus.InProcessing =>
+        NonEmptyAdmissionData(stateData.id, stateData.student.map(_.copy()), AdmissionStatus.InProcessing, "")
+    case ProcessedEvt(data) if data.status == AdmissionStatus.Accepted =>
+        NonEmptyAdmissionData(stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Accepted, "")
+    case ProcessedEvt(data) if data.status == AdmissionStatus.Rejected =>
+        NonEmptyAdmissionData(stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Rejected, data.remarks)
+    }
 
-    case ProcessedEvt(Accepted) => currentData.asInstanceOf[SubmissionData].
-      copy(status = AdmissionStatus.Accepted)
-
-    case ProcessedEvt(Rejected(reason)) => currentData.asInstanceOf[SubmissionData].
-      copy(status = AdmissionStatus.Rejected, remarks = reason)
-
-  }
 
   startWith(InitState, EmptyAdmissionData)
+
 
   when(InitState) {
     case Event(SubmittedEvt(data), _) => goto(PendingValidationState).
       applying(SubmittedEvt(data)) replying ACK andThen {
-      case _ => validator ! data.student
+      case _ => stateData.student.foreach(validator ! _)
     }
   }
 
+
   when(PendingValidationState, stateTimeout =  config.getDuration("validationResponseTimeout")) {
-    case Event(ValidatedEvt(data @ ValidAdmission), stateData) => goto(ValidState).
-      applying (ValidatedEvt(data)) andThen { case _ => processor ! stateData.student }
-    case Event(ValidatedEvt(InvalidAdmission(reason)), _) =>
-      goto(InvalidState) applying ValidatedEvt(InvalidAdmission(reason))
-    case Event(StateTimeout, data) => goto(PendingValidationState) andThen {case_ => validator ! data.student }
+    case Event(ValidatedEvt(data), stateData) if data.valid =>
+       goto(ValidState).applying (ValidatedEvt(data))
+
+    case Event(ValidatedEvt(data), stateData) if !data.valid =>
+       goto(InvalidState) applying ValidatedEvt(data)
+
+    case Event(StateTimeout, data) => goto(PendingValidationState) andThen {
+      case_ => data.student.foreach(validator ! _)
+    }
   }
 
 
-  when(ValidState, config.getDuration("processingAckTimeout")){
-    case Event(ACK, _) => goto(InProcessingState)
-    case Event(StateTimeout, data) => goto(ValidState) andThen {case_ => processor ! data.student }
+  when(ValidState, config.getDuration("processingAckTimeout")) {
+    case Event(evt @ ProcessedEvt(data), _) if data.status == AdmissionStatus.InProcessing =>
+        goto(InProcessingState) applying evt
+
+    case Event(StateTimeout, data) => goto(ValidState) andThen {
+      case_ => data.student.foreach(processor ! _)
+    }
   }
+
 
   //TODO need to decide what to do if admission was invalid
   when(InvalidState, config.getDuration("invalidStateDUration")){
     case Event(ACK, _) => stop()
   }
 
+
   when(InProcessingState, config.getDuration("processingResponseTimeout")){
-    case Event(evt @ ProcessedEvt(Accepted), _) => goto(AcceptedState) applying evt
-    case Event(evt @ ProcessedEvt(Rejected(reason)), _) => goto(RejectedState) applying evt
-    case Event(StateTimeout, data) => goto(InProcessingState) andThen{case _ => processor ! data.student}
+    case Event(evt @ ProcessedEvt(data), stateData)
+      if data.status == AdmissionStatus.Accepted => goto (AcceptedState) applying evt
+    case Event(evt @ ProcessedEvt(data), stateData)
+      if data.status == AdmissionStatus.Rejected => goto (RejectedState) applying evt
+
+    case Event(StateTimeout, data) => goto(InProcessingState) andThen {
+      case _ => data.student.foreach(processor ! _)
+    }
   }
+
 
   //TODO had to put "ACK" so they don't intercept all events
   when(RejectedState){ case Event(ACK,_) => stay()}
   when(AcceptedState){ case Event(ACK,_) => stay()}
 
+
   whenUnhandled{
       case Event(e,s) if `Testing` && e == "state" => stay replying s
   }
+
 
   initialize()
 }
@@ -94,9 +113,6 @@ class AdmissionFSM(id: String, validatorActor: ActorRef, processorActor: ActorRe
 object AdmissionFSM {
   def props(id: String, validator: ActorRef, processor: ActorRef) =
     Props(classOf[AdmissionFSM], id, validator, processor)
-
-
-
 
   sealed trait State extends FSMState
 
