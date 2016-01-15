@@ -3,6 +3,7 @@ package tests.admin
 import akka.actor.Status.{Failure => ActorFailure, Success => ActorSuccess}
 import akka.actor.{Actor, ActorRef, Props}
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
@@ -28,6 +29,16 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
       override def receive = { case AddFaculty(id,_, _) => sender() ! SisdnCreated(id) }}))).route
 
     Post("/admin/faculties", Faculty("1", "fac1", None, None)) ~> adminRoute(user) ~> check{
+      handled shouldBe true
+      status shouldEqual StatusCodes.Created
+    }
+  }
+
+  it should "respond to department creation with success status" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case AddDepartment(id,_, _) => sender() ! SisdnCreated(id) }}))).route
+
+    Post("/admin/departments", Department("1", "fac1", "title", None, None)) ~> Route.seal(adminRoute(user)) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.Created
     }

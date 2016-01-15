@@ -38,6 +38,11 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
           entity(as[Department]) { department =>
             onSuccess(router ? AddDepartment(uuid, user, department.copy(org = Some(user.org)))) { adminPostPF }
           }
+        } ~
+        put {
+          entity(as[Department]) { department =>
+            onSuccess(router ? UpdateDepartment(uuid, user, department.copy(org = Some(user.org)))) { adminPostPF }
+          }
         }
       } ~
       path("courses") {
@@ -45,12 +50,22 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
           entity(as[Course]) { course =>
             onSuccess(router ? AddCourse(uuid, user, course.copy(org = Some(user.org)))) { adminPostPF }
           }
+        } ~
+        put {
+          entity(as[Course]) { course =>
+            onSuccess(router ? UpdateCourse(uuid, user, course.copy(org = Some(user.org)))) { adminPostPF }
+          }
         }
       } ~
       path("programs") {
         post {
           entity(as[Program]) { program =>
             onSuccess(router ? AddProgram(uuid, user, program.copy(org = Some(user.org)))) { adminPostPF }
+          }
+        } ~
+        put {
+          entity(as[Program]) { program =>
+            onSuccess(router ? UpdateProgram(uuid, user, program.copy(org = Some(user.org)))) { adminPostPF }
           }
         }
       }
