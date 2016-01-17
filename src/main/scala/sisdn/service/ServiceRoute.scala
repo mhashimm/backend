@@ -28,7 +28,7 @@ trait ServiceRoute extends Directives with Authentication {
   implicit def sisdnRejectionHandler =
     RejectionHandler.newBuilder()
       .handle { case AuthorizationFailedRejection =>
-        complete((Forbidden, "You're out of your depth!"))
+        complete((Forbidden, "غير مسموح باجراء العملية المطلوبة"))
       }.result
 
   private def addAccessControlHeaders = mapResponseHeaders { headers =>

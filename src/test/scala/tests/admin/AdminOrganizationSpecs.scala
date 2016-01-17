@@ -10,7 +10,7 @@ import sisdn.common._
 class AdminOrganizationSpecs(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
     with FlatSpecLike with Matchers with BeforeAndAfterAll {
 
-  def this() = this(ActorSystem("AdmissionSpec"))
+  def this() = this(ActorSystem("AdminOrganizationSpecs"))
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
@@ -55,11 +55,27 @@ class AdminOrganizationSpecs(_system: ActorSystem) extends TestKit(_system) with
     expectMsg(SisdnInvalid("1", "Faculty does not exist or is inactive"))
   }
 
-  "Add Department" should "fail if added with inactive faculty" in {
+  it should "fail if added with inactive faculty" in {
     val adminOrg = system.actorOf(Organization.props("5"))
     adminOrg ! AddFaculty("1", user, faculty.copy(isActive = Some(false)))
     expectMsg(SisdnCreated("1"))
     adminOrg ! AddDepartment("1", user, department)
     expectMsg(SisdnInvalid("1", "Faculty does not exist or is inactive"))
+  }
+
+  "Organization state" should "correctly add department to state" in {
+    var state = new State(system)
+    state.update(DepartmentAdded("", "", department))
+
+    state.departments should contain (department)
+  }
+
+  it should "correctly update faculty in state" in {
+    val state = new State(system)
+    state.update(DepartmentAdded("", "", department))
+    state.update(DepartmentUpdated("", "", department.copy(titleTr = Some("test"))))
+    val result = state.departments.find(_.id == department.id ).get.titleTr
+    result shouldEqual Some("test")
+    state.departments.size shouldEqual 1
   }
 }

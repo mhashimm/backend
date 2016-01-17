@@ -1,17 +1,17 @@
 package sisdn.Admin
 
-import akka.actor.{ActorLogging, ActorSystem, Actor}
+import akka.actor.{ActorLogging, Actor}
 import Organization._
-import akka.stream.ActorMaterializer
-
-import scala.concurrent.ExecutionContext
+import sisdn.common.SisdnInvalid
 
 class AdminRouter extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case cmd:OrgCmd =>
-      val actor = context.actorOf(Organization.props(cmd.user.org))
-      actor forward cmd
-    case _ => log.debug("received hello"); sender() ! "hello"
+      val org = context.system.actorOf(Organization.props(cmd.user.org))
+      val adminUser = context.actorOf(AdminUser.props(cmd.user.username, org))
+      adminUser forward cmd
+    case _ => log.debug("received unknown command")
+      sender() ! SisdnInvalid
   }
 }
