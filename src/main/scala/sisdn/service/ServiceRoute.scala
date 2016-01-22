@@ -3,14 +3,18 @@ package sisdn.service
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.model.headers.HttpCredentials
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ContentType,  MediaTypes, HttpResponse}
+import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.server._
 import akka.stream.ActorMaterializer
+import akka.stream.javadsl.Sink
 import com.typesafe.config.ConfigFactory
-import sisdn.Admin.{AdminRouter, AdminRoutes}
+import akka.persistence.query.{EventEnvelope, PersistenceQuery}
+import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
+import sisdn.admin._
+import slick.driver.PostgresDriver.api._
 
 trait ServiceRoute extends Directives with Authentication {
   implicit val system = ActorSystem()
@@ -66,13 +70,24 @@ trait ServiceRoute extends Directives with Authentication {
   }
 }
 
-object ServiceEndpoint extends ServiceRoute {
+object ServiceEndpoint extends ServiceRoute with AdminQuery {
   val config = ConfigFactory.load()
   val secret = config.getString("sisdn.key")
   override val allowedOrigins = config.getString("sisdn.cors.allowed-origins")
   val appEnv = config.getString("sisdn.appEnv")
 
   def main(args: Array[String]) {
+
+    val queries = PersistenceQuery(system).readJournalFor[LeveldbReadJournal](
+      LeveldbReadJournal.Identifier)
+
+    db.run(streamOffsets.result).map{ result => result.map{ os =>
+      queries.eventsByPersistenceId (os._1, os._2, Long.MaxValue)
+      .mapAsync (1) {evt => writeToDB (evt)}
+      .runWith (Sink.ignore)
+      }
+    }
+
     Http().bindAndHandle(serviceRoute, "localhost", 8888)
   }
 }

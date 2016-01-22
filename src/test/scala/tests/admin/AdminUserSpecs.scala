@@ -3,8 +3,8 @@ package tests.admin
 import akka.actor.ActorSystem
 import akka.testkit.{TestProbe, TestKit}
 import org.scalatest.{BeforeAndAfterAll, Matchers, FlatSpecLike}
-import sisdn.Admin.AdminUser
-import sisdn.Admin.Organization._
+import sisdn.admin.AdminUser
+import sisdn.admin.Organization._
 import sisdn.common.{SisdnUnauthorized, User}
 
 class AdminUserSpecs(_system: ActorSystem) extends TestKit(_system) with FlatSpecLike

@@ -1,10 +1,10 @@
-package sisdn.Admin
+package sisdn.admin
 
 import akka.actor.{ActorSystem, ActorLogging, Props, ActorRef}
 import akka.persistence.PersistentActor
 import akka.util.Timeout
 import scala.concurrent.duration.DurationInt
-import sisdn.Admin.Organization._
+import sisdn.admin.Organization._
 import sisdn.common.{SisdnUnauthorized, SisdnPending, SisdnReply, User}
 import scala.language.postfixOps
 

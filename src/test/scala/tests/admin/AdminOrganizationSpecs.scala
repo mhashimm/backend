@@ -3,8 +3,8 @@ package tests.admin
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfterAll, Matchers, FlatSpecLike}
-import sisdn.Admin.Organization
-import sisdn.Admin.Organization._
+import sisdn.admin.Organization
+import sisdn.admin.Organization._
 import sisdn.common._
 
 class AdminOrganizationSpecs(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
@@ -16,64 +16,67 @@ class AdminOrganizationSpecs(_system: ActorSystem) extends TestKit(_system) with
     TestKit.shutdownActorSystem(system)
   }
 
-  val faculty = Faculty("id1", "title1", None, None)
-  val department = Department(uuid, "id1", "dep1", None, None)
+  val faculty = Faculty(uuid, "title1", None, Some(uuid))
+  val department = Department(uuid, "id1", "dep1", None,  Some(uuid))
   val user = User("name", "test-org", None, None, None)
 
 
   "AddFaculty" should "Accept valid entry" in {
-    val adminOrg = system.actorOf(Organization.props("1"))
+    val adminOrg = system.actorOf(Organization.props)
     adminOrg ! AddFaculty("uniq", user, faculty)
     expectMsg(SisdnCreated("uniq"))
   }
 
   it should "fail for duplicate faculty addition" in {
-    val adminOrg = system.actorOf(Organization.props("2"))
-    adminOrg ! AddFaculty("1", user, faculty)
+    val adminOrg = system.actorOf(Organization.props)
+    val fac = faculty.copy(id = uuid)
+    adminOrg ! AddFaculty("1", user, fac)
     expectMsg(SisdnCreated("1"))
-    adminOrg ! AddFaculty("1", user, faculty)
+    adminOrg ! AddFaculty("1", user, fac)
     expectMsg(SisdnInvalid("1", "Duplicate faculty"))
   }
 
-  "UpdateFaculty" should "Successfuly update existing faculty" in {
-    val adminOrg = system.actorOf(Organization.props("3"))
-    adminOrg ! AddFaculty("1", user, faculty)
+  "UpdateFaculty" should "Successfully update existing faculty" in {
+    val adminOrg = system.actorOf(Organization.props)
+    val fac = faculty.copy(id = uuid)
+    adminOrg ! AddFaculty("1", user, fac)
     expectMsg(SisdnCreated("1"))
-    adminOrg ! UpdateFaculty("1", user, faculty)
+    adminOrg ! UpdateFaculty("1", user, fac)
     expectMsg(SisdnUpdated("1"))
   }
 
-  it should "Fail update of nonexisting faculty" in {
-    val adminOrg = system.actorOf(Organization.props("4"))
+  it should "Fail update of non-existing faculty" in {
+    val adminOrg = system.actorOf(Organization.props)
     adminOrg ! UpdateFaculty("1", user, faculty.copy(id = "non-existing"))
     expectMsg(SisdnNotFound("1"))
   }
 
   "Add Department" should "fail if added with non-existing faculty" in {
-    val adminOrg = system.actorOf(Organization.props("4"))
+    val adminOrg = system.actorOf(Organization.props)
     adminOrg ! AddDepartment("1", user, department)
     expectMsg(SisdnInvalid("1", "Faculty does not exist or is inactive"))
   }
 
   it should "fail if added with inactive faculty" in {
-    val adminOrg = system.actorOf(Organization.props("5"))
-    adminOrg ! AddFaculty("1", user, faculty.copy(isActive = Some(false)))
+    val adminOrg = system.actorOf(Organization.props)
+    val uid = uuid
+    adminOrg ! AddFaculty("1", user, faculty.copy(id = uid, isActive = Some(false)))
     expectMsg(SisdnCreated("1"))
-    adminOrg ! AddDepartment("1", user, department)
+    adminOrg ! AddDepartment("1", user, department.copy( facultyId = uid))
     expectMsg(SisdnInvalid("1", "Faculty does not exist or is inactive"))
   }
 
   "Organization state" should "correctly add department to state" in {
-    var state = new State(system)
-    state.update(DepartmentAdded("", "", department))
+    val state = new State(system)
+    state.update(DepartmentAdded("", "", department,0))
 
     state.departments should contain (department)
   }
 
   it should "correctly update faculty in state" in {
     val state = new State(system)
-    state.update(DepartmentAdded("", "", department))
-    state.update(DepartmentUpdated("", "", department.copy(titleTr = Some("test"))))
+    state.update(DepartmentAdded("", "", department,0))
+    state.update(DepartmentUpdated("", "", department.copy(titleTr = Some("test")),0))
     val result = state.departments.find(_.id == department.id ).get.titleTr
     result shouldEqual Some("test")
     state.departments.size shouldEqual 1

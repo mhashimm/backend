@@ -1,10 +1,10 @@
 package sisdn
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import sisdn.Admin.Organization.{Program, Course, Department, Faculty}
+import sisdn.admin.Organization.{Program, Course, Department, Faculty}
 import spray.json.DefaultJsonProtocol
 
-package object Admin {
+package object admin {
   trait OrgJsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
     implicit val facultyFormat = jsonFormat5(Faculty.apply)
     implicit val departmentFormat = jsonFormat6(Department.apply)

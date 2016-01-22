@@ -1,4 +1,4 @@
-package sisdn.Admin
+package sisdn.admin
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.StatusCodes
@@ -9,7 +9,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import sisdn.Admin.Organization._
+import sisdn.admin.Organization._
 import sisdn.common._
 
 class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol with OrgJsonProtocol{

@@ -8,8 +8,8 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import org.scalatest.{FlatSpec, Matchers}
-import sisdn.Admin.Organization._
-import sisdn.Admin.{AdminRoutes, OrgJsonProtocol}
+import sisdn.admin.Organization._
+import sisdn.admin.{AdminRoutes, OrgJsonProtocol}
 import sisdn.common._
 
 import scala.concurrent.duration._
