@@ -15,6 +15,7 @@ import akka.persistence.query.{EventEnvelope, PersistenceQuery}
 import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
 import sisdn.admin._
 import slick.driver.PostgresDriver.api._
+import sisdn.admin.AdminQueryRoute
 
 trait ServiceRoute extends Directives with Authentication {
   implicit val system = ActorSystem()
@@ -24,9 +25,9 @@ trait ServiceRoute extends Directives with Authentication {
 
   lazy val allowedOrigin = HttpOrigin(allowedOrigins)
 
-
   val router = system.actorOf(Props(classOf[AdminRouter]))
   val admin = new AdminRoutes(router)
+  val adminQueryRoute = new AdminQueryRoute
   val innerRoutes = admin.route
 
   implicit def sisdnRejectionHandler =
@@ -59,6 +60,7 @@ trait ServiceRoute extends Directives with Authentication {
           pathPrefix("api") {
             authorize(user.isDefined) {
               innerRoutes(user.get)
+              adminQueryRoute.route(user.get)
             }
           } ~ path("") {
             getFromResource("dist/index.html")
