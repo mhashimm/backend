@@ -27,7 +27,6 @@ trait ServiceRoute extends Directives with Authentication {
 
   val router = system.actorOf(Props(classOf[AdminRouter]))
   val admin = new AdminRoutes(router)
-  val adminQueryRoute = new AdminQueryRoute
   val innerRoutes = admin.route
 
   implicit def sisdnRejectionHandler =
@@ -39,7 +38,7 @@ trait ServiceRoute extends Directives with Authentication {
   private def addAccessControlHeaders = mapResponseHeaders { headers =>
     `Access-Control-Allow-Origin`(allowedOrigin) +:
       `Access-Control-Allow-Headers`("Authorization", "Content-Type",
-        "X-Requested-With") +: headers
+        "pragma", "cache-control") +: headers
   }
 
   private def preflightRequestHandler: Route = options {
@@ -60,7 +59,6 @@ trait ServiceRoute extends Directives with Authentication {
           pathPrefix("api") {
             authorize(user.isDefined) {
               innerRoutes(user.get)
-              adminQueryRoute.route(user.get)
             }
           } ~ path("") {
             getFromResource("dist/index.html")

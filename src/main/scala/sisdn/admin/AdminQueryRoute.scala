@@ -10,9 +10,9 @@ import spray.json.DefaultJsonProtocol
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import slick.driver.PostgresDriver.api._
-import spray.json._
 
-class AdminQueryRoute extends Directives with AdminQuery with SprayJsonSupport with DefaultJsonProtocol {
+class AdminQueryRoute extends Directives with AdminQuery
+    with SprayJsonSupport with DefaultJsonProtocol {
   implicit val system: ActorSystem = ActorSystem("AdminQueryRoute")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val executor = system.dispatcher
@@ -30,14 +30,14 @@ class AdminQueryRoute extends Directives with AdminQuery with SprayJsonSupport w
         parameters('coursets.as[Long] ? 0L, 'departmentts.as[Long] ? 0L, 'facultyts.as[Long] ? 0L,
           'programts.as[Long] ? 0L) {(coursets, departmentts, facultyts, programts) =>
           complete {
-            val response = for {
-              crs  <- db.run(courses.filter(c => c.org === user.org && c.ts > coursets).result)
-              deps <- db.run(departments.filter(d => d.org === user.org && d.ts > departmentts).result)
-              facs <- db.run(faculties.filter(f => f.org === user.org && f.ts > facultyts).result)
-              prgs <- db.run(programs.filter(p => p.org === user.org && p.ts > programts).result)
-            } yield AdminQueryResponse(crs, deps, facs, prgs)
+            val q = for {
+              crs  <- courses.filter(c => c.org === user.org && c.ts > coursets).result
+              deps <- departments.filter(d => d.org === user.org && d.ts > departmentts).result
+              facs <- faculties.filter(f => f.org === user.org && f.ts > facultyts).result
+              prgs <- programs.filter(p => p.org === user.org && p.ts > programts).result
+            } yield (crs, deps, facs, prgs)
 
-          response.map(_.toJson)
+          db.run(q).map(r => AdminQueryResponse(r._1, r._2, r._3, r._4))
           }
         }
       }
@@ -49,5 +49,5 @@ case class AdminQueryResponse(
   courses: Seq[CourseRow],
   departments: Seq[DepartmentRow],
   faculties: Seq[FacultyRow],
-  Programs: Seq[ProgramRow]
+  programs: Seq[ProgramRow]
 )

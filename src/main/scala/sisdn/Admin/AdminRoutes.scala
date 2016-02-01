@@ -19,8 +19,10 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
   implicit val ec = system.dispatcher
   implicit val timeout: Timeout = 3 second
 
+  val queryRoute = new AdminQueryRoute().route
+
   val route =  { user: User =>
-    pathPrefix("admin"){
+    pathPrefix("admin"){ queryRoute(user) ~
       path("faculties") {
         post {
           entity(as[Faculty]) { faculty =>
