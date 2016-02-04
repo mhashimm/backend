@@ -65,10 +65,9 @@ class Organization extends PersistentActor with ActorLogging {
           sender() ! SisdnUpdated(id)
           log.info(s"updated department ${evt.department.id}")
         }
-      }
-      case _ => {
-        sender() ! SisdnInvalid(id, "Faculty does not exist or is inactive")
-        log.info(s"Attempting to add department with non-existing/inactive faculty $id")
+        case _ =>
+          sender() ! SisdnInvalid(id, "Faculty does not exist or is inactive")
+          log.info(s"Attempting to add department with non-existing/inactive faculty $id")
       }
     }
 
