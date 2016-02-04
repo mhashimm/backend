@@ -11,11 +11,13 @@ import org.scalatest.{Matchers, FlatSpec}
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import sisdn.admin.{AdminQueryRoute, OrgJsonProtocol}
+import sisdn.admin.OrgJsonProtocol
 import sisdn.common.User
 
 class AdminQueryRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest with OrgJsonProtocol {
+
   import sisdn.admin.AdminQueryRoute
+
   implicit val mat: ActorMaterializer = ActorMaterializer()
   implicit val ec = system.dispatcher
   implicit val timeout: Timeout = 3 second

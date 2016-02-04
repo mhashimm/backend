@@ -3,11 +3,11 @@ package sisdn.admin
 import akka.actor.ActorSystem
 import akka.persistence.query.EventEnvelope
 import akka.stream.ActorMaterializer
-import scala.concurrent.{Future, ExecutionContextExecutor}
-//import slick.driver.H2Driver.api._
-import slick.driver.PostgresDriver.api._
 
+import scala.concurrent.{ExecutionContextExecutor, Future}
+//import slick.driver.H2Driver.api._
 import sisdn.admin.Organization._
+import slick.driver.PostgresDriver.api._
 
 trait AdminQuery {
   implicit val system: ActorSystem

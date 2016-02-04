@@ -5,11 +5,13 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.Directives
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import sisdn.admin._
 import sisdn.common.User
+import slick.driver.PostgresDriver.api._
 import spray.json.DefaultJsonProtocol
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import slick.driver.PostgresDriver.api._
 
 class AdminQueryRoute extends Directives with AdminQuery
     with SprayJsonSupport with DefaultJsonProtocol {

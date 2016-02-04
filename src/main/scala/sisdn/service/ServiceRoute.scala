@@ -38,7 +38,7 @@ trait ServiceRoute extends Directives with Authentication {
   private def addAccessControlHeaders = mapResponseHeaders { headers =>
     `Access-Control-Allow-Origin`(allowedOrigin) +:
       `Access-Control-Allow-Headers`("Authorization", "Content-Type",
-        "pragma", "cache-control") +: headers
+        "pragma", "cache-control", "X-Requested-With") +: headers
   }
 
   private def preflightRequestHandler: Route = options {
