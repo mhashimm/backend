@@ -73,7 +73,7 @@ trait ServiceRoute extends Directives with Authentication {
 object ServiceEndpoint extends ServiceRoute with AdminQuery {
   val config = ConfigFactory.load()
   val secret = config.getString("sisdn.key")
-  override val allowedOrigins = config.getString("sisdn.cors.allowed-origins")
+  override val allowedOrigins = config.getString("sisdn.cors.allowedOrigins")
   val appEnv = config.getString("sisdn.appEnv")
 
   def main(args: Array[String]) {
@@ -83,7 +83,7 @@ object ServiceEndpoint extends ServiceRoute with AdminQuery {
 
     db.run(streamOffsets.result).map{ result => result.map{ os =>
       queries.eventsByPersistenceId (os._1, os._2, Long.MaxValue)
-      .mapAsync (1) {evt => writeToDB (evt)}
+      .mapAsync (1) { writeToDB }
       .runWith (Sink.ignore)
       }
     }
