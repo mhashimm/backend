@@ -1,14 +1,14 @@
-package sisdn.Admin
+package sisdn.admin
 
-import akka.actor.{ActorSystem, Actor, ActorLogging, Props}
+import akka.actor.{ActorSystem, ActorLogging, Props}
 import akka.persistence.PersistentActor
 import sisdn.common._
 
-class Organization(id: String) extends PersistentActor with ActorLogging {
+class Organization extends PersistentActor with ActorLogging {
 
   import Organization._
 
-  override def persistenceId: String = id
+  override def persistenceId: String = "organization"
 
   var state = new State(context.system)
 
@@ -23,7 +23,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
         log.info(s"Found duplicate faculty ${faculty.id}")
       }
       else
-        persist(FacultyAdded(id, user.username, faculty.copy())) { evt =>
+        persist(FacultyAdded(id, user.username, faculty.copy(), System.currentTimeMillis())) { evt =>
           state.update(evt)
           sender() ! SisdnCreated(id)
           log.info(s"Added faculty ${evt.faculty.id}")
@@ -32,7 +32,8 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
     case UpdateFaculty(id, user, faculty) => state.faculties.find(_.id == faculty.id) match {
       case None => sender() ! SisdnNotFound(id)
         log.info(s"Faculty not found ${faculty.id}")
-      case Some(found) => persist(FacultyUpdated(id, user.username, faculty.copy(id = found.id, org = found.org))) { evt =>
+      case Some(found) => persist(FacultyUpdated(id, user.username, faculty.copy(id = found.id, org = found.org),
+          System.currentTimeMillis())) { evt =>
         state.update(evt)
         sender() ! SisdnUpdated(id)
         log.info(s"updated faculty ${evt.faculty.id}")
@@ -41,7 +42,8 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
 
     case AddDepartment(id, user, department) => state.departments.find(_.id == department.id) match {
       case None => state.faculties.find(_.id == department.facultyId) match {
-        case Some(f) if f.isActive.get => persist(DepartmentAdded(id, user.username, department.copy())) { evt =>
+        case Some(f) if f.isActive.get => persist(DepartmentAdded(id, user.username, department.copy(),
+            System.currentTimeMillis())) { evt =>
           state.update(evt)
           sender() ! SisdnCreated(id)
           log.info(s"Added department ${evt.department.id}")
@@ -57,21 +59,22 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
       case None => sender() ! SisdnNotFound(id)
         log.info(s"Department not found ${department.id}")
       case Some(found) => state.faculties.find(_.id == department.facultyId) match {
-        case Some(f) if f.isActive.get => persist(DepartmentUpdated(id, user.username, department.copy(id = found.id, org = found.org))) { evt =>
+        case Some(f) if f.isActive.get => persist(DepartmentUpdated(id, user.username,
+          department.copy(id = found.id, org = found.org), System.currentTimeMillis())) { evt =>
           state.update(evt)
           sender() ! SisdnUpdated(id)
           log.info(s"updated department ${evt.department.id}")
         }
-      }
-      case _ => {
-        sender() ! SisdnInvalid(id, "Faculty does not exist or is inactive")
-        log.info(s"Attempting to add department with non-existing/inactive faculty $id")
+        case _ =>
+          sender() ! SisdnInvalid(id, "Faculty does not exist or is inactive")
+          log.info(s"Attempting to add department with non-existing/inactive faculty $id")
       }
     }
 
     case AddCourse(id, user, course) => state.courses.find(_.id == course.id) match {
       case None => (state.faculties.find(_.id == course.facultyId), state.departments.find(_.id == course.departmentId)) match {
-        case (Some(f), Some(d)) if f.isActive.get && d.isActive.get => persist(CourseAdded(id, user.username, course.copy())) { evt =>
+        case (Some(f), Some(d)) if f.isActive.get && d.isActive.get =>
+          persist(CourseAdded(id, user.username, course.copy(), System.currentTimeMillis())) { evt =>
           state.update(evt)
           sender() ! SisdnCreated(id)
           log.info(s"Added course ${evt.course.id}")
@@ -88,7 +91,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
         log.info(s"course not found ${course.id}")
       case Some(found) => (state.faculties.find(_.id == course.facultyId), state.departments.find(_.id == course.departmentId)) match {
         case (Some(f), Some(d)) if d.isActive.get && f.isActive.get =>
-          persist(CourseUpdated(id, user.username, course.copy(id = found.id, org = found.org))) {
+          persist(CourseUpdated(id, user.username, course.copy(id = found.id, org = found.org), System.currentTimeMillis())) {
             evt =>
               state.update(evt)
               sender() ! SisdnUpdated(id)
@@ -103,7 +106,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
       case Some(p) => sender() ! SisdnInvalid(id, "duplicate program")
         log.info("Found duplicate program")
       case None => state.faculties.find(_.id == program.facultyId) match {
-        case Some(f) if f.isActive.get => persist(ProgramAdded(id, user.username, program.copy())) { evt =>
+        case Some(f) if f.isActive.get => persist(ProgramAdded(id, user.username, program.copy(), System.currentTimeMillis())) { evt =>
           state.update(evt)
           sender() ! SisdnCreated(id)
           log.info(s"Added program ${evt.program.id}")
@@ -117,7 +120,8 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
       case None => sender() ! SisdnNotFound(id)
         log.info(s"Program not found ${program.id}")
       case Some(found) => state.faculties.find(_.id == program.facultyId) match {
-        case Some(f) if f.isActive.get => persist(ProgramUpdated(id, user.username, program.copy(id = found.id, org = found.org))) { evt =>
+        case Some(f) if f.isActive.get => persist(ProgramUpdated(id, user.username, program.copy(id = found.id, org = found.org),
+            System.currentTimeMillis())) { evt =>
           state.update(evt)
           sender() ! SisdnUpdated(id)
           log.info(s"updated program ${evt.program.id}")
@@ -130,7 +134,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
 }
 
 object Organization {
-  def props(id: String) = Props(classOf[Organization], id)
+  def props = Props(classOf[Organization])
 
   sealed trait OrgCmd extends ObjectWithId { val user: User; val entity: OrganizationEntity }
   case class AddFaculty(id: String, user: User, entity: Faculty) extends OrgCmd
@@ -141,16 +145,18 @@ object Organization {
   case class UpdateCourse(id: String, user: User, entity: Course) extends OrgCmd
   case class AddProgram(id: String, user: User, entity: Program) extends OrgCmd
   case class UpdateProgram(id: String, user: User, entity: Program) extends OrgCmd
+  case class GetEntities(courses: Option[Long], departments: Option[Long], faculties: Option[Long], programs: Option[Long])
 
   sealed trait OrganizationEvt extends ObjectWithId
-  case class FacultyAdded(id: String, user: String, faculty: Faculty) extends OrganizationEvt
-  case class FacultyUpdated(id: String, user: String, faculty: Faculty) extends OrganizationEvt
-  case class DepartmentAdded(id: String, user: String, department: Department) extends OrganizationEvt
-  case class DepartmentUpdated(id: String, user: String, department: Department) extends OrganizationEvt
-  case class CourseAdded(id: String, user: String, course: Course) extends OrganizationEvt
-  case class CourseUpdated(id: String, user: String, course: Course) extends OrganizationEvt
-  case class ProgramAdded(id: String, user: String, program: Program) extends OrganizationEvt
-  case class ProgramUpdated(id: String, user: String, program: Program) extends OrganizationEvt
+  case class FacultyAdded(id: String, user: String, faculty: Faculty, timestamp: Long) extends OrganizationEvt
+  case class FacultyUpdated(id: String, user: String, faculty: Faculty, timestamp: Long) extends OrganizationEvt
+  case class DepartmentAdded(id: String, user: String, department: Department, timestamp: Long) extends OrganizationEvt
+  case class DepartmentUpdated(id: String, user: String, department: Department, timestamp: Long) extends OrganizationEvt
+  case class CourseAdded(id: String, user: String, course: Course, timestamp: Long) extends OrganizationEvt
+  case class CourseUpdated(id: String, user: String, course: Course, timestamp: Long) extends OrganizationEvt
+  case class ProgramAdded(id: String, user: String, program: Program, timestamp: Long) extends OrganizationEvt
+  case class ProgramUpdated(id: String, user: String, program: Program, timestamp: Long) extends OrganizationEvt
+  case class FoundEntities(courses: List[Course], departments: List[Department], faculties: List[Faculty], programs: List[Program])
 
   class State(system: ActorSystem) {
     def update(evt: OrganizationEvt): Unit = evt match {

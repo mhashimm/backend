@@ -1,4 +1,4 @@
-package sisdn.Admin
+package sisdn.admin
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.StatusCodes
@@ -9,7 +9,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import sisdn.Admin.Organization._
+import sisdn.admin.Organization._
 import sisdn.common._
 
 class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol with OrgJsonProtocol{
@@ -19,8 +19,10 @@ class AdminRoutes(val router: ActorRef) extends Directives with UserJsonProtocol
   implicit val ec = system.dispatcher
   implicit val timeout: Timeout = 3 second
 
+  val queryRoute = new AdminQueryRoute().route
+
   val route =  { user: User =>
-    pathPrefix("admin"){
+    pathPrefix("admin"){ queryRoute(user) ~
       path("faculties") {
         post {
           entity(as[Faculty]) { faculty =>
