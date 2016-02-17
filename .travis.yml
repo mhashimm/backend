@@ -1,0 +1,6 @@
+language: scala
+jdk: oraclejdk7
+sudo: false
+scala:
+   - 2.11.7
+sbt_args: -no-colors -J-Xss2m
