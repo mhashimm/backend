@@ -50,7 +50,7 @@ class ServiceRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest {
   it should "Return AllowOrigin Header for \"Option\" request for \"CORS\"" in {
     Options("/api") ~> Route.seal(serviceRoutes) ~> check {
       headers(0).name shouldEqual `Access-Control-Allow-Origin`.name
-      headers(0).value shouldEqual config1.getString("sisdn.cors.allowed-origins")
+      headers(0).value shouldEqual config1.getString("sisdn.cors.allowedOrigins")
     }
   }
 }
@@ -60,7 +60,7 @@ object ServiceRouteSpecs {
   val serviceRoutesClass = new ServiceRoute {
     val secret = config1.getString("sisdn.key")
     val appEnv = config1.getString("sisdn.appEnv")
-    val allowedOrigins = config1.getString("sisdn.cors.allowed-origins")
+    val allowedOrigins = config1.getString("sisdn.cors.allowedOrigins")
     override val innerRoutes = { user: User =>
       onSuccess(Future.successful("")){ str =>
         complete(StatusCodes.OK)
