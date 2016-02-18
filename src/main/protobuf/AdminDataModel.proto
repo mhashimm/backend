@@ -1,0 +1,49 @@
+option java_package = "sisdn.admission";
+option optimize_for = SPEED;
+option java_outer_classname = "AdmissionDataModel";
+
+message Student{
+    optional string id = 1;
+    optional string name = 2;
+    optional int32 faculty = 3;
+    optional int32 program = 4;
+    optional string org = 5;
+}
+
+enum AdmissionStatus{
+    PENDING       = 1;
+    VALID         = 2;
+    INVALID       = 3;
+    ACCEPTED      = 4;
+    REJECTED      = 5;
+    INPROCESSING  = 6;
+}
+
+message SubmissionData {
+    optional string id = 1;
+    optional Student student = 2;
+    optional AdmissionStatus status = 3 [default = PENDING];
+    optional string remarks = 4;
+}
+
+message AdmissionValidationResponse {
+    required bool valid = 1;
+    optional string remarks = 2;
+}
+
+message AdmissionProcessingResponse {
+    required AdmissionStatus status = 1;
+    optional string remarks = 2;
+}
+
+message SubmittedEvt {
+    required SubmissionData data = 1;
+}
+
+message ValidatedEvt {
+    required AdmissionValidationResponse data = 1;
+}
+
+message ProcessedEvt {
+    required AdmissionProcessingResponse data = 1;
+}
