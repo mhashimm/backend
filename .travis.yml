@@ -2,5 +2,14 @@ language: scala
 jdk: oraclejdk8
 sudo: false
 scala:
-   - 2.11.7
-sbt_args: -no-colors -J-Xss2m
+- 2.11.7
+sbt_args: "-no-colors -J-Xss2m"
+deploy:
+  provider: openshift
+  user: mhashim.gm@gmail.com
+  password:
+    secure: dgS+wQLRK4fc485oyEs6CfxbUMUY0GDn6HmYWbwQ1yXjWE4vulfYd8a4Npdoc+5YpOFlqOn6J/lAX6Mu2FLbHZidtwjkvtAtitfdjMNYUuPjeBJPTA/yV4ZGGaLEn7raPFXcmSCAPKz55hz/hlXwHUceOQKQYDW64icui/UH/c6Khgr/JdMzd5czOGsW5/BXesFumiCm2eBVxbwyBvlvEGYcr0HoeNeYICPjW83JBV7cBi3mkhtkpyPTQNOTGe+qJkPZ1+FKbNKJks2VA+mD4HzJ64WNvl7/zF5fCteUAKdIo7sDxZb/GjOvK0dDCZaNAfwQCpINd8+j26rgcTev1KlAOzbvBsWWlCPSUzin/Rp2VEJhCfLHEgAJeDvaWdICbTKuWNgujHxvSim28wUIDnS5HsmWZoHwUmpw2fz+AhFOiTb3za2hdplh9BQxp9/3sdE2jebG5LsSlU6uWpR3l8wYCMfsmVnc9F03tt5/cYPXMTk2MpjL1mnVSC+w0hKs3VfDkZfsrrChaO5PBz7USkx/zitGEUNeZauBUdHCokCV/NohKn6A4bNvDH258aAHcx3JSRmBH9FGyAcIir+ZNRjo7g2KV/qIXrzaaNjpYuuFkYKX4AXjJH5YmAPxh1W7JZKXjlRooKe+t/Ed3hr3FLTuokVugfXeR4KwCDFMHzA=
+  app: service
+  domain: sisdn
+  on:
+    repo: mhashimm/backend
