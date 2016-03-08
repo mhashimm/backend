@@ -38,7 +38,8 @@ libraryDependencies ++= Seq(
   "ch.qos.logback"                  %  "logback-classic"                      % "1.1.3",
   "com.nimbusds"                    %  "nimbus-jose-jwt"                      % "4.0.1",
   "com.h2database"                  %  "h2"                                   % "1.4.190",
-  "org.postgresql"                  %  "postgresql"                           % "9.4.1207"
+  "mysql"                           % "mysql-connector-java"                  % "5.1.38"
+  //"org.postgresql"                  %  "postgresql"                           % "9.4.1207"
   //"com.zaxxer"                      %  "HikariCP"                             % "2.4.1"
 )
 

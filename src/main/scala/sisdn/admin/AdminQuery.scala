@@ -7,13 +7,13 @@ import akka.stream.ActorMaterializer
 import scala.concurrent.{ExecutionContextExecutor, Future}
 //import slick.driver.H2Driver.api._
 import sisdn.admin.Organization._
-import slick.driver.PostgresDriver.api._
+import slick.driver.MySQLDriver.api._
 
 trait AdminQuery {
   implicit val system: ActorSystem
   implicit val executor: ExecutionContextExecutor
   implicit val materializer: ActorMaterializer
-  val db = Database.forConfig("postgres")
+  val db = Database.forConfig("mysql")
   val streamOffsets = TableQuery[StreamOffsets]
   val faculties = TableQuery[Faculties]
   val departments = TableQuery[Departments]
