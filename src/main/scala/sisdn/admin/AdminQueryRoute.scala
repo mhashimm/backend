@@ -7,7 +7,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import sisdn.admin._
 import sisdn.common.User
-import slick.driver.PostgresDriver.api._
+import slick.driver.MySQLDriver.api._
 import spray.json.DefaultJsonProtocol
 
 import scala.concurrent.duration._
