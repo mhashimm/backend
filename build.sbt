@@ -1,3 +1,5 @@
+import com.typesafe.sbt.packager.archetypes.JavaServerAppPackaging
+
 scalacOptions ++= Seq("-feature", "-deprecation")
 //javaOptions  ++= Seq("-Dconfig.trace=loads")
 
@@ -53,3 +55,6 @@ javaOptions in Test += "-Dconfig.resource=test.conf"
 //mainClass in (Compile, run) := Some("sisdn.service.ServiceRoute")
 
 //mainClass in (Compile, packageBin) := Some("sisdn.service.ServiceRoute")
+
+
+enablePlugins(JavaServerAppPackaging)
