@@ -9,7 +9,7 @@ deploy:
   user: mhashim.gm@gmail.com
   password:
     secure: TkBegWHN+08V+xhDbatf/nI9uvDCa2QwEn9QZZXmqOWpjVArORYlj0k59oUP8hgD5eLI/942kB3e0Dwv9X3vVx7Ous8QJ5UV4qBdtE3sTNu5MZvEXFgDtosEJvmFmc3U+gdyHDwpyc8a6iYZqypPPt9x9+byxMDAxdHrc85grMQbGrxi/a8JsR2kD4RpbRskNLzL+6h5R1FXDauZeciV39HO95lJmwTeQyGjlPbukRmP9KeHdkTSm60sGeN2HbmHmGZ6jmCHt9OI5zliSPbV+Enjr8PbRTRj3fu6+a461/xZOQdjsE+oDdadf3eNUdca6T6ncF8o1CCGJWJnxHYUXiCPZi0dD02QZNx3faXbJAwCC9eza6NRCUfxnO1H4ADRiaDsKuUDe50hIKwqPkw83s0Ix2cIZ9EWpxoDmFIAhfgIru5sFFPtI+vIjemhhOykChl5ttkNq9Y5nZqy+v9Bygwro2iEQGnE4TQ+3UisrP0+ewhEwLEdPL+telXvEx2K/ieXxqy/Jta/7/LzfX6Bh9D9v2BTovRMtxO6qKoZsA3fStZIeUuoUVn0VVLTYVbUFDc2Tz4tZYtgw8YowViJxGB5F6SrsCeOyh94epNy3OmCQaVi6cKAXbswzamPUCbKi0XsKJ6joDRZCIbq1rZ4fdhlSmV98LDLOYVE5t3sRGk=
-  app: service
+  app: sisdn
   domain: sisdn
   on:
     repo: mhashimm/backend
