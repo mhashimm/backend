@@ -7,7 +7,7 @@ import akka.stream.ActorMaterializer
 import scala.concurrent.{ExecutionContextExecutor, Future}
 //import slick.driver.H2Driver.api._
 import sisdn.admin.Organization._
-import slick.driver.MySQLDriver.api._
+import slick.driver.PostgresDriver.api._
 
 trait AdminQuery {
   implicit val system: ActorSystem
