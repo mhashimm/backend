@@ -14,7 +14,7 @@ import com.typesafe.config.ConfigFactory
 import akka.persistence.query.{EventEnvelope, PersistenceQuery}
 import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
 import sisdn.admin._
-import slick.driver.MySQLDriver.api._
+import slick.driver.PostgresDriver.api._
 import sisdn.admin.AdminQueryRoute
 
 trait ServiceRoute extends Directives with Authentication {

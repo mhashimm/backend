@@ -13,7 +13,7 @@ trait AdminQuery {
   implicit val system: ActorSystem
   implicit val executor: ExecutionContextExecutor
   implicit val materializer: ActorMaterializer
-  val db = Database.forConfig("mysql")
+  val db = Database.forConfig("postgres")
   val streamOffsets = TableQuery[StreamOffsets]
   val faculties = TableQuery[Faculties]
   val departments = TableQuery[Departments]
