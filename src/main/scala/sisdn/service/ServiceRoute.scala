@@ -73,6 +73,7 @@ trait ServiceRoute extends Directives with Authentication {
 object ServiceEndpoint extends ServiceRoute with AdminQuery {
   val config = ConfigFactory.load()
   val secret = config.getString("sisdn.key")
+  val port = scala.util.Properties.envOrElse("PORT", "8888").toInt
   override val allowedOrigins = config.getString("sisdn.cors.allowedOrigins")
   val appEnv = config.getString("sisdn.appEnv")
 
@@ -88,7 +89,7 @@ object ServiceEndpoint extends ServiceRoute with AdminQuery {
       }
     }
 
-    Http().bindAndHandle(serviceRoute, "localhost", 8888)
+    Http().bindAndHandle(serviceRoute, "localhost", port)
   }
 }
 
