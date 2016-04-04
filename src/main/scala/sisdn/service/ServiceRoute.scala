@@ -88,7 +88,7 @@ object ServiceEndpoint extends ServiceRoute with AdminQuery {
       }
     }
 
-    Http().bindAndHandle(serviceRoute, "localhost", 8888)
+    Http().bindAndHandle(serviceRoute, "localhost", 8080)
   }
 }
 
