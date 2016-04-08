@@ -113,7 +113,7 @@ class Faculties(tag: Tag) extends Table[FacultyRow](tag, "faculties") {
   //def pk = primaryKey("faculties_pk", (id, org))
 }
 
-class StreamOffsets(tag: Tag) extends Table[(String, Long)](tag, "streamOffsets"){
+class StreamOffsets(tag: Tag) extends Table[(String, Long)](tag, "stream_offsets"){
   def id = column[String]("id", O.PrimaryKey)
   def offset = column[Long]("offset")
 
