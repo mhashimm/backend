@@ -8,6 +8,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.server._
+import akka.persistence.jdbc.query.journal.scaladsl.JdbcReadJournal
 import akka.stream.ActorMaterializer
 import akka.stream.javadsl.Sink
 import com.typesafe.config.ConfigFactory
@@ -79,8 +80,8 @@ object ServiceEndpoint extends ServiceRoute with AdminQuery {
 
   def main(args: Array[String]) {
 
-    val queries = PersistenceQuery(system).readJournalFor[LeveldbReadJournal](
-      LeveldbReadJournal.Identifier)
+    val queries = PersistenceQuery(system).readJournalFor[JdbcReadJournal](
+      JdbcReadJournal.Identifier)
 
     db.run(streamOffsets.result).map{ result => result.map{ os =>
       queries.eventsByPersistenceId (os._1, os._2, Long.MaxValue)

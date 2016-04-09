@@ -10,6 +10,10 @@ lazy val root = (project in file(".")).settings(
 )
 
 resolvers += "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
+// to resolve the slick-extensions you need the following repo
+resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/maven-releases/"
+// akka-persistence-jdbc is available in Bintray's JCenter
+resolvers += Resolver.jcenterRepo
 
 val akkaV       = "2.4.1"
 val akkaStreamV = "2.0.1"
@@ -32,7 +36,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick"              %% "slick-hikaricp"                       % "3.1.1",
   //"org.slf4j"                       % "slf4j-nop"                             % "1.6.4",
   "org.scalatest"                   %% "scalatest"                            % scalaTestV % Test,
-  "org.iq80.leveldb"                %  "leveldb"                              % "0.7",
+  "com.github.dnvriend"             %% "akka-persistence-jdbc"                % "2.2.16",
   "org.fusesource.leveldbjni"       %  "leveldbjni-all"                       % "1.8",
   "com.jason-goodwin"               %% "authentikat-jwt"                      % "0.4.1",
   "com.github.dnvriend"             %% "akka-persistence-inmemory"            % "1.1.5" % Test,
