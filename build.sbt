@@ -6,7 +6,7 @@ scalacOptions ++= Seq("-feature", "-deprecation")
 lazy val root = (project in file(".")).settings(
   name          := """sisdn""",
   version       := "1.0-Alpha",
-  scalaVersion  := "2.11.7"
+  scalaVersion  := "2.11.8"
 )
 
 resolvers += "dnvriend at bintray" at "http://dl.bintray.com/dnvriend/maven"
@@ -15,7 +15,7 @@ resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/maven-rel
 // akka-persistence-jdbc is available in Bintray's JCenter
 resolvers += Resolver.jcenterRepo
 
-val akkaV       = "2.4.1"
+val akkaV       = "2.4.3"
 val akkaStreamV = "2.0.1"
 val scalaTestV  = "2.2.5"
 
@@ -26,11 +26,11 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka"               %% "akka-persistence"                     % akkaV,
   "com.typesafe.akka"               %% "akka-persistence-query-experimental"  % akkaV,
   "com.typesafe.akka"               %% "akka-remote"                          % akkaV,
-  "com.typesafe.akka"               %% "akka-stream-experimental"             % akkaStreamV,
-  "com.typesafe.akka"               %% "akka-http-core-experimental"          % akkaStreamV,
-  "com.typesafe.akka"               %% "akka-http-experimental"               % akkaStreamV,
-  "com.typesafe.akka"               %% "akka-http-spray-json-experimental"    % akkaStreamV,
-  "com.typesafe.akka"               %% "akka-http-testkit-experimental"       % akkaStreamV,
+  "com.typesafe.akka"               %% "akka-stream"                          % akkaV,
+  "com.typesafe.akka"               %% "akka-http-core"                       % akkaV,
+  "com.typesafe.akka"               %% "akka-http-experimental"               % akkaV,
+  "com.typesafe.akka"               %% "akka-http-spray-json-experimental"    % akkaV,
+  "com.typesafe.akka"               %% "akka-http-testkit"                    % akkaV,
   //"com.typesafe.slick"              %% "slick"                                % "3.1.1",
   "com.typesafe"                    %  "config"                               % "1.3.0",
   "com.typesafe.slick"              %% "slick-hikaricp"                       % "3.1.1",
