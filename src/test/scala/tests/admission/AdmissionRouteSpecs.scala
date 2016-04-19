@@ -55,11 +55,9 @@ object AdmissionRouteSpecs{
                                  |"org" : "org", "faculties" : [1]}""".stripMargin)
   val jwt: String = JsonWebToken(JwtHeader("HS256"), claimsSet, key)
 
-  val routeClass = new AdmissionRoute {
-    override def userExtractor(str:String) = User("subject", "org", None, None, None)
-  }
+  val routeClass = new AdmissionRoute
 
-  val admissionRoute = routeClass.route
+  val admissionRoute = routeClass.route(User("subject", "org", None, None, None))
   val hdr = Authorization(OAuth2BearerToken(jwt))
 }
 

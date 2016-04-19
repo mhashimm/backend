@@ -8,8 +8,8 @@ class AdminRouter extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case cmd:OrgCmd =>
-      val org = context.system.actorOf(Organization.props)
-      val adminUser = context.actorOf(AdminUser.props(cmd.user.username, org))
+      val org = context.system.actorOf(Organization.props(cmd.user.org))
+      val adminUser = context.actorOf(AdminUser.props(cmd.user, org))
       adminUser forward cmd
     case _ => log.debug("received unknown command")
       sender() ! SisdnInvalid

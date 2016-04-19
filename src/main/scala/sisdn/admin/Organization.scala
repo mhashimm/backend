@@ -4,11 +4,11 @@ import akka.actor.{ActorSystem, ActorLogging, Props}
 import akka.persistence.PersistentActor
 import sisdn.common._
 
-class Organization extends PersistentActor with ActorLogging {
+class Organization(id: String) extends PersistentActor with ActorLogging {
 
   import Organization._
 
-  override def persistenceId: String = "organization"
+  override def persistenceId: String = id
 
   var state = new State(context.system)
 
@@ -134,7 +134,7 @@ class Organization extends PersistentActor with ActorLogging {
 }
 
 object Organization {
-  def props = Props(classOf[Organization])
+  def props(id: String) = Props(classOf[Organization], id)
 
   sealed trait OrgCmd extends ObjectWithId { val user: User; val entity: OrganizationEntity }
   case class AddFaculty(id: String, user: User, entity: Faculty) extends OrgCmd

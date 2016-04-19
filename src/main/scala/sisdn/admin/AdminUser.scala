@@ -8,9 +8,9 @@ import sisdn.admin.Organization._
 import sisdn.common.{SisdnUnauthorized, SisdnPending, SisdnReply, User}
 import scala.language.postfixOps
 
-class AdminUser(id: String, org: ActorRef) extends PersistentActor with ActorLogging {
+class AdminUser(user: User, org: ActorRef) extends PersistentActor with ActorLogging {
   import AdminUser._
-  override def persistenceId: String = id
+  override def persistenceId: String = user.username
 
   implicit val ec = context.dispatcher
   implicit val timeout: Timeout = 3 second
@@ -35,7 +35,7 @@ class AdminUser(id: String, org: ActorRef) extends PersistentActor with ActorLog
 }
 
 object AdminUser{
-  def props(id: String, org: ActorRef) = Props(new AdminUser(id, org))
+  def props(user: User, org: ActorRef) = Props(new AdminUser(user, org))
 
   def userHasClaim(user: User, entity: OrganizationEntity): Boolean = entity match {
     case e:Faculty => user.claims.exists(_.contains("admin_" + e.org.get))

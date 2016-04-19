@@ -14,23 +14,18 @@ class AdmissionRoute extends Directives with StudentJsonProtocol with UserJsonPr
   implicit val system = ActorSystem("admission")
   implicit val mat: ActorMaterializer = ActorMaterializer()
   implicit val ec: ExecutionContext = system.dispatcher
-  implicit val timeout: Timeout = 1 second
+  implicit val timeout: Timeout = 3 second
 
-  def userExtractor(token: String) = {
-    JsonParser(token).convertTo[User]
-  }
-
-  val route: Route = path("admit" / "v1" | "admit") {
-    post {
-      extractCredentials { bt =>
-        provide(userExtractor(bt.get.token)) { user =>
-          entity(as[List[Student]]) { students =>
-            complete {
-              ""
-            }
+  val route = { user: User =>
+    path("admit" / "v1" | "admit") {
+      post {
+        entity(as[List[Student]]) { students =>
+          complete {
+            ""
           }
         }
       }
     }
   }
 }
+

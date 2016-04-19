@@ -25,35 +25,35 @@ trait AdminQuery {
       //TODO due to a bug in postgres driver we cant insert row with composite PK so ...
       faculties.insertOrUpdate(FacultyRow(e.faculty.id, e.faculty.title, e.faculty.titleTr,
         e.faculty.org.get, e.faculty.isActive.get, e.timestamp)),
-      streamOffsets.update("organization", event.sequenceNr)))
+      streamOffsets.insertOrUpdate(e.faculty.org.get, event.sequenceNr)))
     case e:FacultyUpdated => db.run( DBIO.seq(
       faculties.insertOrUpdate(FacultyRow(e.faculty.id, e.faculty.title, e.faculty.titleTr,
         e.faculty.org.get, e.faculty.isActive.get, e.timestamp)),
-      streamOffsets.update("organization", event.sequenceNr)))
+      streamOffsets.insertOrUpdate(e.faculty.org.get, event.sequenceNr)))
     case e:DepartmentAdded => db.run(DBIO.seq(
       departments.insertOrUpdate(DepartmentRow(e.department.id, e.department.facultyId, e.department.title,
         e.department.titleTr, e.department.org.get, e.department.isActive.get, e.timestamp)),
-      streamOffsets.update("organization", event.sequenceNr)))
+      streamOffsets.insertOrUpdate(e.department.org.get, event.sequenceNr)))
     case e:DepartmentUpdated => db.run(DBIO.seq(
       departments.insertOrUpdate(DepartmentRow(e.department.id, e.department.facultyId, e.department.title,
         e.department.titleTr, e.department.org.get, e.department.isActive.get, e.timestamp)),
-      streamOffsets.update("organization", event.sequenceNr)))
+      streamOffsets.insertOrUpdate(e.department.org.get, event.sequenceNr)))
     case e: CourseAdded => db.run(DBIO.seq(
       courses.insertOrUpdate(CourseRow(e.course.id, e.course.departmentId, e.course.facultyId, e.course.title,
         e.course.titleTr, e.course.org.get, e.course.isActive.get, e.course.remarks, e.timestamp)),
-      streamOffsets.update("organization", event.sequenceNr)))
+      streamOffsets.insertOrUpdate(e.course.org.get, event.sequenceNr)))
     case e: CourseUpdated => db.run(DBIO.seq(
       courses.insertOrUpdate(CourseRow(e.course.id, e.course.departmentId, e.course.facultyId, e.course.title,
         e.course.titleTr, e.course.org.get, e.course.isActive.get, e.course.remarks, e.timestamp)),
-      streamOffsets.update("organization", event.sequenceNr)))
+      streamOffsets.insertOrUpdate(e.course.org.get, event.sequenceNr)))
     case e:ProgramAdded => db.run(DBIO.seq(
       programs.insertOrUpdate(ProgramRow(e.program.id, e.program.facultyId, e.program.terms, e.program.creditHours,
          e.program.title, e.program.titleTr, e.program.org.get, e.program.isActive.get, e.timestamp)),
-      streamOffsets.update("organization", event.sequenceNr)))
+      streamOffsets.insertOrUpdate(e.program.org.get, event.sequenceNr)))
     case e:ProgramUpdated => db.run(DBIO.seq(
       programs.insertOrUpdate(ProgramRow(e.program.id, e.program.facultyId, e.program.terms, e.program.creditHours,
         e.program.title, e.program.titleTr, e.program.org.get, e.program.isActive.get, e.timestamp)),
-      streamOffsets.update("organization", event.sequenceNr)))
+      streamOffsets.insertOrUpdate(e.program.org.get, event.sequenceNr)))
     case _ => Future.successful(())
   }
 }
