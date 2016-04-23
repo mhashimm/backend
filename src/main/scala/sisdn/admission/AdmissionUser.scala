@@ -2,7 +2,7 @@ package sisdn.admission
 
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.PersistentActor
-import sisdn.common.User
+import sisdn.common.{SisdnCreated, SisdnDuplicate, User, uuid}
 
 class AdmissionUser(user: User, admitter: ActorRef)
   extends PersistentActor with ActorLogging {
@@ -32,18 +32,32 @@ class AdmissionUser(user: User, admitter: ActorRef)
   }
 
   def receiveRecover = {
-    case admissionRvt: AdmissionStatusUpdateEvt => updateState(admissionRvt)
+    case admissionEvt: AdmissionStatusUpdateEvt => updateState(admissionEvt)
   }
 
   def receiveCommand = {
-    case Admit(_, _, student) => {
-      persist(state.admissions.exists(_._1 != student.id)) _ //TODO handle callback
+    case admit: Admit => {
+      if(!state.admissions.contains(admit.id)) {
+        persist(AdmissionStatusUpdateEvt(admit.id, AdmissionStatus.Pending, "")) { evt =>
+          sender() ! SisdnCreated(admit.id)
+          admitter ! SubmittedEvt(
+            NonEmptyAdmissionData(
+              uuid,
+              admit.id,
+              Some(admit.student),
+              AdmissionStatus.Pending,
+              "",
+              Some(admit.user) ))
+        }
+      }
+      else
+        sender() ! SisdnDuplicate(admit.id, "")
     }
   }
 }
 
 object AdmissionUser {
-  def props(user: User, admiter: ActorRef) = Props(new AdmissionUser(user, admiter))
+  def props(user: User, admitter: ActorRef) = Props(new AdmissionUser(user, admitter))
 
   case class Admit(id: String, user: User, student: Student)
 

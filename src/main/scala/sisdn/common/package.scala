@@ -40,5 +40,10 @@ package object common {
     def apply(id: String, message: String): SisdnInvalid    = SisdnInvalid(id, List(message))
     def apply(id: String, messages: String*) :SisdnInvalid  = SisdnInvalid(id, messages.toList)
   }
+  case class SisdnDuplicate(id: String, validationErrors: List[String]) extends SisdnReply
+  object SisdnDuplicate{
+    def apply(id: String, message: String): SisdnDuplicate    = SisdnDuplicate(id, List(message))
+    def apply(id: String, messages: String*) :SisdnDuplicate  = SisdnDuplicate(id, messages.toList)
+  }
 
 }

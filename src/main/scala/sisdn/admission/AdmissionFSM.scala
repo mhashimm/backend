@@ -33,13 +33,16 @@ class AdmissionFSM(id: String, user: User, validatorActor: ActorRef, processorAc
 
     case ValidatedEvt(data) if data.valid =>
        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Valid, "", Some(user))
+
     case ValidatedEvt(data) if !data.valid =>
       NonEmptyAdmissionData(currentData.uuid, currentData.id, stateData.student.map(_.copy()), AdmissionStatus.Invalid, "", Some(user))
 
     case ProcessedEvt(data) if data.status == AdmissionStatus.InProcessing =>
         NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.InProcessing, "", Some(user))
+
     case ProcessedEvt(data) if data.status == AdmissionStatus.Accepted =>
         NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Accepted, "", Some(user))
+
     case ProcessedEvt(data) if data.status == AdmissionStatus.Rejected =>
         NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Rejected, data.remarks, Some(user))
     }

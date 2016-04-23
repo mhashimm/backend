@@ -14,7 +14,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import headers._
 import sisdn.admission.AdmissionUser.Admit
-import sisdn.common.{SisdnCreated, User}
+import sisdn.common.{SisdnCreated, SisdnDuplicate, User}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -27,8 +27,6 @@ class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest
 
   def routeClass(actor: ActorRef) = new AdmissionRoute(actor)
 
-
-
   "Admission Service" should "Return Success for POST Request" in {
     val admissionRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive: Receive = {
@@ -38,6 +36,18 @@ class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest
 
     Post("/admit", HttpEntity(`application/json`, stdJson)).addHeader(hdr) ~> admissionRoute ~> check {
       status shouldBe StatusCodes.Created
+    }
+  }
+
+  it should "Fail for duplicate admission with proper response" in {
+    val admissionRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive: Receive = {
+        case Admit(id, _, _) => sender() ! SisdnDuplicate(id)
+      }
+    }))).route(User("subject", "org", None, None, None))
+
+    Post("/admit", HttpEntity(`application/json`, stdJson)).addHeader(hdr) ~> admissionRoute ~> check {
+      status shouldBe StatusCodes.custom(409, "Duplicate admission")
     }
   }
 
