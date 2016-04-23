@@ -4,13 +4,13 @@ import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.PersistentActor
 import sisdn.common.User
 
-class AdmissionUser(id: String, admiter: ActorRef)
+class AdmissionUser(user: User, admitter: ActorRef)
   extends PersistentActor with ActorLogging {
 
   import AdmissionStatus._
   import AdmissionUser._
 
-  override def persistenceId = id
+  override def persistenceId = user.username
 
   val state = new UserState
 
@@ -18,12 +18,12 @@ class AdmissionUser(id: String, admiter: ActorRef)
     if (evt.status == Pending) {
       log debug s"Admission ${evt.id} Pending"
       state.update(evt)
-      admiter ! evt
+      admitter ! evt
     }
     else if (evt.status == Valid) {
       log debug s"Admission ${evt.id} Valid"
       state.update(evt)
-      admiter ! evt
+      admitter ! evt
     }
     else if (evt.status == Rejected || evt.status == Accepted) {
       log.debug(s"Admission ${evt.id} ${evt.status}")
@@ -36,16 +36,16 @@ class AdmissionUser(id: String, admiter: ActorRef)
   }
 
   def receiveCommand = {
-    case Admit(_, students) => {
-      persistAll(students.filter(std => state.admissions.exists(_._1 != std.id))) _ //TODO handle callback
+    case Admit(_, _, student) => {
+      persist(state.admissions.exists(_._1 != student.id)) _ //TODO handle callback
     }
   }
 }
 
 object AdmissionUser {
-  def props(id: String, admiter: ActorRef) = Props(new AdmissionUser(id, admiter))
+  def props(user: User, admiter: ActorRef) = Props(new AdmissionUser(user, admiter))
 
-  case class Admit(user: User, students: List[Student])
+  case class Admit(id: String, user: User, student: Student)
 
   case class AdmissionStatusUpdateEvt(id: String, status: AdmissionStatus.Value, remarks: String)
 

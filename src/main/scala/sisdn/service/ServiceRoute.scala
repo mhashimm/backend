@@ -17,7 +17,7 @@ import akka.persistence.query.journal.leveldb.scaladsl.LeveldbReadJournal
 import sisdn.admin._
 import slick.driver.PostgresDriver.api._
 import sisdn.admin.AdminQueryRoute
-import sisdn.admission.AdmissionRoute
+import sisdn.admission.{AdmissionRoute, AdmissionRouter}
 import sisdn.common.User
 
 trait ServiceRoute extends Directives with Authentication {
@@ -30,7 +30,8 @@ trait ServiceRoute extends Directives with Authentication {
 
   val adminRouter = system.actorOf(Props(classOf[AdminRouter]))
   val admin = new AdminRoutes(adminRouter)
-  val admission = new AdmissionRoute()
+  val admissionRouter = system.actorOf(Props(classOf[AdmissionRouter]))
+  val admission = new AdmissionRoute(admissionRouter)
   val innerRoutes = { user: User =>
     admin.route(user) ~
     admission.route(user)

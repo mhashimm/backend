@@ -18,11 +18,12 @@ class UserActorSpecs (_system: ActorSystem) extends TestKit(_system) with Implic
 
   val admitor = TestProbe()
 
-  val user = system.actorOf(AdmissionUser.props("1", admitor.ref))
-  val students = List.range(1,4).flatMap{ x => List(Student(x.toHexString,"",x,x,"org")) }
+  val user = User("1","",None,None, None)
+  val userActor = system.actorOf(AdmissionUser.props(user, admitor.ref))
+  val student = Student("1","1",1,1,"org")
 
   ignore should "extract correct number of admission to list" in {
-    user ! Admit(User("1","",None,None, None), students)
+    userActor ! Admit("1", user, student)
     val admissions = admitor.receiveWhile(){ case a:AdmissionStatusUpdateEvt => a}
     admissions.length shouldEqual 3
   }

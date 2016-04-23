@@ -12,7 +12,7 @@ import scala.language.postfixOps
 import scala.reflect.{ClassTag, classTag}
 
 
-class AdmissionFSM(id: String, validatorActor: ActorRef, processorActor: ActorRef)
+class AdmissionFSM(id: String, user: User, validatorActor: ActorRef, processorActor: ActorRef)
   extends PersistentFSM[State, AdmissionData, AdmissionEvt] with ActorLogging {
 
 
@@ -32,16 +32,16 @@ class AdmissionFSM(id: String, validatorActor: ActorRef, processorActor: ActorRe
     case SubmittedEvt(data) => data
 
     case ValidatedEvt(data) if data.valid =>
-       NonEmptyAdmissionData(stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Valid, "")
+       NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Valid, "", Some(user))
     case ValidatedEvt(data) if !data.valid =>
-      NonEmptyAdmissionData(currentData.id, stateData.student.map(_.copy()), AdmissionStatus.Invalid, "")
+      NonEmptyAdmissionData(currentData.uuid, currentData.id, stateData.student.map(_.copy()), AdmissionStatus.Invalid, "", Some(user))
 
     case ProcessedEvt(data) if data.status == AdmissionStatus.InProcessing =>
-        NonEmptyAdmissionData(stateData.id, stateData.student.map(_.copy()), AdmissionStatus.InProcessing, "")
+        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.InProcessing, "", Some(user))
     case ProcessedEvt(data) if data.status == AdmissionStatus.Accepted =>
-        NonEmptyAdmissionData(stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Accepted, "")
+        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Accepted, "", Some(user))
     case ProcessedEvt(data) if data.status == AdmissionStatus.Rejected =>
-        NonEmptyAdmissionData(stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Rejected, data.remarks)
+        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Rejected, data.remarks, Some(user))
     }
 
 
@@ -51,7 +51,7 @@ class AdmissionFSM(id: String, validatorActor: ActorRef, processorActor: ActorRe
   when(InitState) {
     case Event(SubmittedEvt(data), _) => goto(PendingValidationState).
       applying(SubmittedEvt(data)) replying ACK andThen {
-      case _ => stateData.student.foreach(validator ! _)
+      case _ => validator ! stateData.student
     }
   }
 
@@ -64,7 +64,7 @@ class AdmissionFSM(id: String, validatorActor: ActorRef, processorActor: ActorRe
        goto(InvalidState) applying ValidatedEvt(data)
 
     case Event(StateTimeout, data) => goto(PendingValidationState) andThen {
-      case_ => data.student.foreach(validator ! _)
+      case_ => validator ! stateData.student
     }
   }
 
@@ -74,7 +74,7 @@ class AdmissionFSM(id: String, validatorActor: ActorRef, processorActor: ActorRe
         goto(InProcessingState) applying evt
 
     case Event(StateTimeout, data) => goto(ValidState) andThen {
-      case_ => data.student.foreach(processor ! _)
+      case_ => processor ! data.student
     }
   }
 
@@ -111,8 +111,8 @@ class AdmissionFSM(id: String, validatorActor: ActorRef, processorActor: ActorRe
 }
 
 object AdmissionFSM {
-  def props(id: String, validator: ActorRef, processor: ActorRef) =
-    Props(classOf[AdmissionFSM], id, validator, processor)
+  def props(id: String, user: User, validator: ActorRef, processor: ActorRef) =
+    Props(classOf[AdmissionFSM], id, user, validator, processor)
 
   sealed trait State extends FSMState
 
