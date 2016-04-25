@@ -20,7 +20,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
   implicit val ec = system.dispatcher
   implicit val timeout: Timeout = 3 second
 
-  val user = User("subject", "org", None, None, None)
+  val user = User("subject", "org", None, None, Some(Set("admin_org")))
 
   def routeClass(actor: ActorRef) = new AdminRoutes(actor)
 
@@ -28,8 +28,8 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive = { case AddFaculty(id,_, _) => sender() ! SisdnCreated(id) }}))).route
 
-    Post("/admin/faculties", Faculty("1", "fac1", None, None)) ~> adminRoute(user) ~> check{
-      handled shouldBe true
+    Post("/admin/faculties", Faculty("1", "fac1", None, Some("org"))) ~> adminRoute(user) ~> check{
+      //handled shouldBe true
       status shouldEqual StatusCodes.Created
     }
   }
@@ -38,9 +38,10 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive = { case AddDepartment(id,_, _) => sender() ! SisdnCreated(id) }}))).route
 
-    Post("/admin/departments", Department("1", "fac1", "title", None, None)) ~> Route.seal(adminRoute(user)) ~> check{
-      handled shouldBe true
-      status shouldEqual StatusCodes.Created
+    Post("/admin/departments", Department("1", "fac1", "title", None, Some("org"))) ~>
+      Route.seal(adminRoute(user)) ~> check{
+        handled shouldBe true
+        status shouldEqual StatusCodes.Created
     }
   }
 
@@ -48,7 +49,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
     val adminRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive = { case UpdateFaculty(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
 
-    Put("/admin/faculties", Faculty("1", "fac1", None, None)) ~> adminRoute(user) ~> check {
+    Put("/admin/faculties", Faculty("1", "fac1", None, Some("org"))) ~> adminRoute(user) ~> check {
       handled shouldBe true
       status shouldEqual StatusCodes.OK
     }
@@ -59,7 +60,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
       override def receive = { case AddDepartment(_,_,_) =>
         sender() ! SisdnInvalid("validation", "errors") }}))).route
 
-    Post("/admin/departments", Department("1", "dep1", "", None, None)) ~> adminRoute(user) ~> check{
+    Post("/admin/departments", Department("1", "dep1", "", None, Some("org"))) ~> adminRoute(user) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.BadRequest
     }
@@ -70,7 +71,7 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
       override def receive = { case AddCourse(id,_,_) =>
         sender() ! SisdnUnauthorized(id) }}))).route
 
-    Post("/admin/courses", Course("1", "", "", "crs", None, None, None)) ~> adminRoute(user) ~> check{
+    Post("/admin/courses", Course("1", "", "", "crs", None, None, Some("org"))) ~> adminRoute(user) ~> check{
       handled shouldBe true
       status shouldEqual StatusCodes.Unauthorized
     }
@@ -84,5 +85,93 @@ class AdminRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest wit
 
     Post("/admin/programs", Program("id", "title", 8, 8.77 ,"program", None, Some("org"))) ~>
       adminRoute(user) ~> check{ handled shouldBe true }
+  }
+
+  it should "reject request from different org admin" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case UpdateFaculty(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
+
+    Put("/admin/faculties", Faculty("1", "fac1", None, Some("org"))) ~>
+      Route.seal(adminRoute(user.copy(claims = Some(Set("admin_other-org"))))) ~> check {
+      handled shouldBe true
+      status shouldEqual StatusCodes.Forbidden
+    }
+  }
+
+  it should "accept request for faculty admin to create department entity" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case UpdateDepartment(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
+
+    Put("/admin/departments", Department("dep1", "fac1", "", None, Some("org"))) ~>
+      Route.seal(adminRoute(user.copy(claims = Some(Set("admin_fac1"))))) ~> check {
+      handled shouldBe true
+      status shouldEqual StatusCodes.OK
+    }
+  }
+
+  it should "accept request for department admin to create course entity" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case AddCourse(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
+
+    Post("/admin/courses", Course("crs1", "dep1", "fac1", "", None, None, Some("org"))) ~>
+      Route.seal(adminRoute(user.copy(claims = Some(Set("admin_dep1"))))) ~> check {
+        handled shouldBe true
+        status shouldEqual StatusCodes.OK
+    }
+  }
+
+  it should "admin user should have claim for faculty" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case UpdateFaculty(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
+
+    Put("/admin/faculties", Faculty("1", "fac1", None, Some("org"))) ~>
+      Route.seal(adminRoute(user.copy(claims = Some(Set("admin_org"))))) ~> check {
+      handled shouldBe true
+      status shouldEqual StatusCodes.OK
+    }
+  }
+
+  it should "reject request with no claims" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case UpdateFaculty(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
+
+    Put("/admin/faculties", Faculty("1", "fac1", None, Some("non-existing"))) ~>
+      Route.seal(adminRoute(user.copy(claims = Some(Set("admin_org"))))) ~> check {
+      handled shouldBe true
+      status shouldEqual StatusCodes.Forbidden
+    }
+  }
+
+  it should "accept request for department admin" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case UpdateDepartment(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
+
+    Put("/admin/departments", Department("dep1", "fac1", "", None, Some("org"))) ~>
+      Route.seal(adminRoute(user.copy(claims = Some(Set("admin_fac1"))))) ~> check {
+      handled shouldBe true
+      status shouldEqual StatusCodes.OK
+    }
+  }
+
+  it should "reject request for department admin of different department" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case AddCourse(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
+
+    Post("/admin/courses", Course("crs1", "dep1", "fac1", "", None, None, Some("org"))) ~>
+      Route.seal(adminRoute(user.copy(claims = Some(Set("admin_dep2"))))) ~> check {
+      handled shouldBe true
+      status shouldEqual StatusCodes.Forbidden
+    }
+  }
+
+  it should "reject request for department admin of different organization" in {
+    val adminRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive = { case AddCourse(id,_, _) => sender() ! SisdnUpdated(id) }}))).route
+
+    Post("/admin/courses", Course("crs1", "dep1", "fac1", "", None, None, Some("other-org"))) ~>
+      Route.seal(adminRoute(user.copy(claims = Some(Set("admin_dep1"))))) ~> check {
+      handled shouldBe true
+      status shouldEqual StatusCodes.Forbidden
+    }
   }
 }

@@ -5,12 +5,12 @@ import akka.persistence.PersistentActor
 import akka.util.Timeout
 import scala.concurrent.duration.DurationInt
 import sisdn.admin.Organization._
-import sisdn.common.{SisdnUnauthorized, SisdnPending, SisdnReply, User}
+import sisdn.common.{SisdnPending, SisdnReply}
 import scala.language.postfixOps
 
-class AdminUser(user: User, org: ActorRef) extends PersistentActor with ActorLogging {
+class AdminUser(userId: String, org: ActorRef) extends PersistentActor with ActorLogging {
   import AdminUser._
-  override def persistenceId: String = user.username
+  override def persistenceId: String = userId
 
   implicit val ec = context.dispatcher
   implicit val timeout: Timeout = 3 second
@@ -22,36 +22,15 @@ class AdminUser(user: User, org: ActorRef) extends PersistentActor with ActorLog
   }
 
   override def receiveCommand: Receive = {
-    case cmd: OrgCmd if userHasClaim(cmd.user, cmd.entity)  =>
-      persist(cmd){ evt =>
+    case cmd: OrgCmd => persist(cmd){ evt =>
         org forward cmd
         context.system.log.info(s"$evt")
       }
-    case cmd: OrgCmd if !userHasClaim(cmd.user, cmd.entity) => persist(cmd) { evt =>
-      sender() ! SisdnUnauthorized(evt.id)
-      context.system.log.info(s"An unauthorized attempt to access admin portal with  this event $evt")
-    }
   }
 }
 
 object AdminUser{
-  def props(user: User, org: ActorRef) = Props(new AdminUser(user, org))
-
-  def userHasClaim(user: User, entity: OrganizationEntity): Boolean = entity match {
-    case e:Faculty => user.claims.exists(_.contains("admin_" + e.org.get))
-
-    case e: Department => user.claims.exists(c => c.contains("admin_" + e.org.get) ||
-      (c.contains("admin_" + e.facultyId) && e.org.get == user.org ))
-
-    case e:Program => user.claims.exists(c => c.contains("admin_" + e.org.get) ||
-      (c.contains("admin_" + e.facultyId) && e.org.get == user.org ))
-
-    case e:Course => user.claims.exists(c => c.contains("admin_" + e.org.get) ||
-      (c.contains("admin_" + e.facultyId) || c.contains("admin_" + e.departmentId)
-        && e.org.get == user.org))
-  }
-
-
+  def props(userId: String, org: ActorRef) = Props(new AdminUser(userId, org))
 
   class State(system: ActorSystem) {
     var commands = Map[String, Map[OrgCmd, SisdnReply]]()
