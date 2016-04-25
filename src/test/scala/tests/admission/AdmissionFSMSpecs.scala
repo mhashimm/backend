@@ -5,12 +5,12 @@ import akka.persistence.fsm.PersistentFSM._
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
-import sisdn.admission._
-import sisdn.common.uuid
-
 import scala.language.postfixOps
 import scala.concurrent.duration._
+
 import sisdn.common.{User, asFiniteDuration}
+import sisdn.admission._
+import sisdn.common.uuid
 
 class AdmissionFSMSpecs(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
     with FlatSpecLike with Matchers with BeforeAndAfterAll {
@@ -30,10 +30,10 @@ class AdmissionFSMSpecs(_system: ActorSystem) extends TestKit(_system) with Impl
   val user = User("user1", "org", None, None, None)
 
   def admissionFunc(id: String, user: User, valid: ActorRef, proc: ActorRef): ActorRef =
-    system.actorOf(AdmissionFSM.props(id, user, valid, proc))
+    system.actorOf(AdmissionFSM.props(id, user.username, valid, proc))
 
-  def admissionData(id: String) = NonEmptyAdmissionData(uuid, id, Some(Student(id, "", 1, 1, "org")),
-    AdmissionStatus.Pending, "", Some(user))
+  def admissionData(id: String) = NonEmptyAdmissionData(uuid, id, Some(Student(id, "", "1", "1", "org")),
+    AdmissionStatus.Pending, "", user.username)
 
 
   "Admission actor" should "acknowledge received and save admission" in {

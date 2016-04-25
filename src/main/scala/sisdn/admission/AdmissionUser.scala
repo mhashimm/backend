@@ -2,15 +2,15 @@ package sisdn.admission
 
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.PersistentActor
-import sisdn.common.{SisdnCreated, SisdnDuplicate, User, uuid}
+import sisdn.common.{SisdnCreated, SisdnDuplicate, SisdnInvalid, User, uuid}
 
-class AdmissionUser(user: User, admitter: ActorRef)
+class AdmissionUser(userId: String, admitter: ActorRef)
   extends PersistentActor with ActorLogging {
 
   import AdmissionStatus._
   import AdmissionUser._
 
-  override def persistenceId = user.username
+  override def persistenceId = userId
 
   val state = new UserState
 
@@ -36,30 +36,32 @@ class AdmissionUser(user: User, admitter: ActorRef)
   }
 
   def receiveCommand = {
-    case admit: Admit => {
-      if(!state.admissions.contains(admit.id)) {
-        persist(AdmissionStatusUpdateEvt(admit.id, AdmissionStatus.Pending, "")) { evt =>
-          sender() ! SisdnCreated(admit.id)
+    case admission: Admission => {
+      if(!state.admissions.contains(admission.id)) {
+        persist(AdmissionStatusUpdateEvt(admission.id, AdmissionStatus.Pending, "")) { evt =>
+          sender() ! SisdnCreated(admission.id)
           admitter ! SubmittedEvt(
             NonEmptyAdmissionData(
               uuid,
-              admit.id,
-              Some(admit.student),
+              admission.id,
+              Some(admission.student),
               AdmissionStatus.Pending,
               "",
-              Some(admit.user) ))
+              userId ))
         }
       }
       else
-        sender() ! SisdnDuplicate(admit.id, "")
+        sender() ! SisdnDuplicate(admission.id, "")
     }
+
+    case _ => sender() ! SisdnInvalid("", "Unknown command")
   }
 }
 
 object AdmissionUser {
-  def props(user: User, admitter: ActorRef) = Props(new AdmissionUser(user, admitter))
+  def props(userId: String, admitter: ActorRef) = Props(new AdmissionUser(userId, admitter))
 
-  case class Admit(id: String, user: User, student: Student)
+  case class Admission(id: String, user: User, student: Student)
 
   case class AdmissionStatusUpdateEvt(id: String, status: AdmissionStatus.Value, remarks: String)
 

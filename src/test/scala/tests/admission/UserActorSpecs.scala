@@ -5,7 +5,7 @@ import akka.actor
 import akka.actor.{Props, ActorSystem}
 import akka.testkit._
 import org.scalatest.{BeforeAndAfterAll, Matchers, FlatSpecLike}
-import AdmissionUser.{AdmissionStatusUpdateEvt, Admit}
+import AdmissionUser.{AdmissionStatusUpdateEvt, Admission}
 import sisdn.common.User
 import scala.concurrent.duration.DurationInt
 
@@ -19,11 +19,11 @@ class UserActorSpecs (_system: ActorSystem) extends TestKit(_system) with Implic
   val admitor = TestProbe()
 
   val user = User("1","",None,None, None)
-  val userActor = system.actorOf(AdmissionUser.props(user, admitor.ref))
-  val student = Student("1","1",1,1,"org")
+  val userActor = system.actorOf(AdmissionUser.props(user.username, admitor.ref))
+  val student = Student("1","1","1","1","org")
 
   ignore should "extract correct number of admission to list" in {
-    userActor ! Admit("1", user, student)
+    userActor ! Admission("1", user, student)
     val admissions = admitor.receiveWhile(){ case a:AdmissionStatusUpdateEvt => a}
     admissions.length shouldEqual 3
   }

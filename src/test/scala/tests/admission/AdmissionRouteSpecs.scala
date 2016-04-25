@@ -13,7 +13,7 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import headers._
-import sisdn.admission.AdmissionUser.Admit
+import sisdn.admission.AdmissionUser.Admission
 import sisdn.common.{SisdnCreated, SisdnDuplicate, User}
 
 import scala.concurrent.duration._
@@ -30,9 +30,9 @@ class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest
   "Admission Service" should "Return Success for POST Request" in {
     val admissionRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive: Receive = {
-        case Admit(uuid, _, _) => sender() ! SisdnCreated(uuid)
+        case Admission(uuid, _, _) => sender() ! SisdnCreated(uuid)
       }
-    }))).route(User("subject", "org", None, None, None))
+    }))).route(User("subject", "org", None, None, Some(Set("admitter_org"))))
 
     Post("/admit", HttpEntity(`application/json`, stdJson)).addHeader(hdr) ~> admissionRoute ~> check {
       status shouldBe StatusCodes.Created
@@ -42,9 +42,9 @@ class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest
   it should "Fail for duplicate admission with proper response" in {
     val admissionRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive: Receive = {
-        case Admit(id, _, _) => sender() ! SisdnDuplicate(id)
+        case Admission(id, _, _) => sender() ! SisdnDuplicate(id)
       }
-    }))).route(User("subject", "org", None, None, None))
+    }))).route(User("subject", "org", None, None, Some(Set("admitter_org"))))
 
     Post("/admit", HttpEntity(`application/json`, stdJson)).addHeader(hdr) ~> admissionRoute ~> check {
       status shouldBe StatusCodes.custom(409, "Duplicate admission")
@@ -54,7 +54,7 @@ class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest
   it should "Return MethodNotAllowed for GET Request" in {
     val admissionRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive: Receive = {
-        case Admit(uuid, _, _) => sender() ! SisdnCreated(uuid)
+        case Admission(uuid, _, _) => sender() ! SisdnCreated(uuid)
       }
     }))).route(User("subject", "org", None, None, None))
 
@@ -66,9 +66,9 @@ class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest
   it should """Accept request for /v1 route as the default route""" in {
     val admissionRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive: Receive = {
-        case Admit(uuid, _, _) => sender() ! SisdnCreated(uuid)
+        case Admission(uuid, _, _) => sender() ! SisdnCreated(uuid)
       }
-    }))).route(User("subject", "org", None, None, None))
+    }))).route(User("subject", "org", None, None, Some(Set("admitter_org"))))
 
     Post("/admit/v1", HttpEntity(`application/json`, stdJson)).addHeader(hdr) ~> admissionRoute ~> check {
       status shouldBe StatusCodes.Created
@@ -78,7 +78,7 @@ class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest
   it should """Fail for arbitrary Url""" in {
     val admissionRoute = routeClass(system.actorOf(Props(new Actor(){
       override def receive: Receive = {
-        case Admit(uuid, _, _) => sender() ! SisdnCreated(uuid)
+        case Admission(uuid, _, _) => sender() ! SisdnCreated(uuid)
       }
     }))).route(User("subject", "org", None, None, None))
 
@@ -92,6 +92,33 @@ class AdmissionRouteSpecs extends FlatSpec with Matchers with ScalatestRouteTest
       handled shouldBe false
     }
   }
+
+  it should "prohibit admitter from different org to admit" in {
+    val admissionRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive: Receive = {
+        case Admission(id, _, _) => sender() ! SisdnDuplicate(id)
+      }
+    }))).route(User("subject", "org", None, None, Some(Set("admitter_other-org"))))
+
+    Post("/admit", HttpEntity(`application/json`, stdJson)).addHeader(hdr) ~>
+      Route.seal(admissionRoute) ~> check {
+      status shouldBe StatusCodes.Forbidden
+    }
+  }
+
+
+  it should "prohibit user from the same org with no admitter privilege for faculty" in {
+    val admissionRoute = routeClass(system.actorOf(Props(new Actor(){
+      override def receive: Receive = {
+        case Admission(id, _, _) => sender() ! SisdnDuplicate(id)
+      }
+    }))).route(User("subject", "org", None, None, Some(Set("admitter_2"))))
+
+    Post("/admit", HttpEntity(`application/json`, stdJson)).addHeader(hdr) ~>
+      Route.seal(admissionRoute) ~> check {
+      status shouldBe StatusCodes.Forbidden
+    }
+  }
 }
 
 object AdmissionRouteSpecs{
@@ -99,7 +126,7 @@ object AdmissionRouteSpecs{
   val key = config.getString("sisdn.key")
   val stdJson =
     """{"id" : "1", "name" : "name", "thirdName" : "third",
-      | "org" : "org", "faculty" : 1, "program" : 1}""".stripMargin
+      | "org" : "org", "faculty" : "1", "program" : "1"}""".stripMargin
   val claimsSet = JwtClaimsSet("""{"departments" : [1], "subject" : "subject",
                                  |"org" : "org", "faculties" : [1]}""".stripMargin)
   val jwt: String = JsonWebToken(JwtHeader("HS256"), claimsSet, key)

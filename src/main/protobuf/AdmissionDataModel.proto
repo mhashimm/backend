@@ -5,8 +5,8 @@ option java_outer_classname = "AdmissionDataModel";
 message Student{
     optional string id = 1;
     optional string name = 2;
-    optional int32 faculty = 3;
-    optional int32 program = 4;
+    optional string faculty = 3;
+    optional string program = 4;
     optional string org = 5;
 }
 

@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 import sisdn.common._
-import sisdn.admission.AdmissionUser.Admit
+import sisdn.admission.AdmissionUser.Admission
 
 class AdmissionRoute(router: ActorRef) extends Directives with StudentJsonProtocol with UserJsonProtocol {
   import AdmissionRoute._
@@ -25,7 +25,9 @@ class AdmissionRoute(router: ActorRef) extends Directives with StudentJsonProtoc
     path("admit" / "v1" | "admit") {
       post {
         entity(as[Student]) { student =>
-          onSuccess(router ? Admit(uuid, user, student)) { admissionPostPF}
+          authorize(authorizeAdmission(user, student)) {
+            onSuccess(router ? Admission(uuid, user, student)) { admissionPostPF }
+          }
         }
       }
     }
@@ -40,4 +42,9 @@ object AdmissionRoute {
     case SisdnUnauthorized(id) => complete(StatusCodes.Unauthorized)
     case SisdnDuplicate(id, errors) => complete(StatusCodes.custom(409, "Duplicate admission"))
   }
+
+  def authorizeAdmission(user: User, student: Student) =
+    user.claims.exists(claims => claims.contains("admitter_" + student.org)) ||
+      (user.org == student.org && user.claims.exists(claims =>
+        claims.contains("admitter_" + student.faculty)))
 }

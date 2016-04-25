@@ -12,7 +12,7 @@ import scala.language.postfixOps
 import scala.reflect.{ClassTag, classTag}
 
 
-class AdmissionFSM(id: String, user: User, validatorActor: ActorRef, processorActor: ActorRef)
+class AdmissionFSM(id: String, userId: String, validatorActor: ActorRef, processorActor: ActorRef)
   extends PersistentFSM[State, AdmissionData, AdmissionEvt] with ActorLogging {
 
 
@@ -32,19 +32,19 @@ class AdmissionFSM(id: String, user: User, validatorActor: ActorRef, processorAc
     case SubmittedEvt(data) => data
 
     case ValidatedEvt(data) if data.valid =>
-       NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Valid, "", Some(user))
+       NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Valid, "", userId)
 
     case ValidatedEvt(data) if !data.valid =>
-      NonEmptyAdmissionData(currentData.uuid, currentData.id, stateData.student.map(_.copy()), AdmissionStatus.Invalid, "", Some(user))
+      NonEmptyAdmissionData(currentData.uuid, currentData.id, stateData.student.map(_.copy()), AdmissionStatus.Invalid, "", userId)
 
     case ProcessedEvt(data) if data.status == AdmissionStatus.InProcessing =>
-        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.InProcessing, "", Some(user))
+        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.InProcessing, "", userId)
 
     case ProcessedEvt(data) if data.status == AdmissionStatus.Accepted =>
-        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Accepted, "", Some(user))
+        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Accepted, "", userId)
 
     case ProcessedEvt(data) if data.status == AdmissionStatus.Rejected =>
-        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Rejected, data.remarks, Some(user))
+        NonEmptyAdmissionData(stateData.uuid, stateData.id, stateData.student.map(_.copy()), AdmissionStatus.Rejected, data.remarks, userId)
     }
 
 
@@ -114,8 +114,8 @@ class AdmissionFSM(id: String, user: User, validatorActor: ActorRef, processorAc
 }
 
 object AdmissionFSM {
-  def props(id: String, user: User, validator: ActorRef, processor: ActorRef) =
-    Props(classOf[AdmissionFSM], id, user, validator, processor)
+  def props(id: String, userId: String, validator: ActorRef, processor: ActorRef) =
+    Props(classOf[AdmissionFSM], id, userId, validator, processor)
 
   sealed trait State extends FSMState
 

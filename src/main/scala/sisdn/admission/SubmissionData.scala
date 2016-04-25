@@ -23,7 +23,7 @@ sealed trait AdmissionData {
   val student: Option[Student] = None
   val status: AdmissionStatus.Value = AdmissionStatus.Pending
   val remarks: String = ""
-  val user: Option[User] = None
+  val userId: String = ""
 }
 
 case class NonEmptyAdmissionData
@@ -33,7 +33,7 @@ case class NonEmptyAdmissionData
   override val student: Option[Student],
   override val status: AdmissionStatus.Value,
   override val remarks: String,
-  override val user: Option[User]
+  override val userId: String
 ) extends AdmissionData
 
 case object EmptyAdmissionData extends AdmissionData
