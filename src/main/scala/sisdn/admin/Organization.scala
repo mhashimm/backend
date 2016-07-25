@@ -136,94 +136,66 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
 object Organization {
   def props(id: String) = Props(classOf[Organization], id)
 
-  sealed trait OrgCmd extends ObjectWithId { val user: User; val entity: OrganizationEntity }
+  sealed trait OrgCmd extends ObjectWithId {
+    val user: User;
+    val entity: OrganizationEntity
+  }
+
   case class AddFaculty(id: String, user: User, entity: Faculty) extends OrgCmd
+
   case class UpdateFaculty(id: String, user: User, entity: Faculty) extends OrgCmd
+
   case class AddDepartment(id: String, user: User, entity: Department) extends OrgCmd
-  case class UpdateDepartment (id: String, user: User, entity: Department) extends OrgCmd
+
+  case class UpdateDepartment(id: String, user: User, entity: Department) extends OrgCmd
+
   case class AddCourse(id: String, user: User, entity: Course) extends OrgCmd
+
   case class UpdateCourse(id: String, user: User, entity: Course) extends OrgCmd
+
   case class AddProgram(id: String, user: User, entity: Program) extends OrgCmd
+
   case class UpdateProgram(id: String, user: User, entity: Program) extends OrgCmd
+
   case class GetEntities(courses: Option[Long], departments: Option[Long], faculties: Option[Long], programs: Option[Long])
 
   sealed trait OrganizationEvt extends ObjectWithId
+
   case class FacultyAdded(id: String, user: String, faculty: Faculty, timestamp: Long) extends OrganizationEvt
+
   case class FacultyUpdated(id: String, user: String, faculty: Faculty, timestamp: Long) extends OrganizationEvt
+
   case class DepartmentAdded(id: String, user: String, department: Department, timestamp: Long) extends OrganizationEvt
+
   case class DepartmentUpdated(id: String, user: String, department: Department, timestamp: Long) extends OrganizationEvt
+
   case class CourseAdded(id: String, user: String, course: Course, timestamp: Long) extends OrganizationEvt
+
   case class CourseUpdated(id: String, user: String, course: Course, timestamp: Long) extends OrganizationEvt
+
   case class ProgramAdded(id: String, user: String, program: Program, timestamp: Long) extends OrganizationEvt
+
   case class ProgramUpdated(id: String, user: String, program: Program, timestamp: Long) extends OrganizationEvt
+
   case class FoundEntities(courses: List[Course], departments: List[Department], faculties: List[Faculty], programs: List[Program])
 
   class State(system: ActorSystem) {
     def update(evt: OrganizationEvt): Unit = evt match {
-        case f: FacultyAdded        => faculties = faculties + f.faculty
-        case f: FacultyUpdated      => faculties = faculties.filterNot(_.id == f.faculty.id) + f.faculty
-        case d: DepartmentAdded     => departments = departments + d.department
-        case d: DepartmentUpdated   => departments = departments.filterNot(_.id == d.department.id) + d.department
-        case c: CourseAdded         => courses = courses + c.course
-        case c: CourseUpdated       => courses = courses.filterNot(_.id == c.course.id) + c.course
-        case p: ProgramAdded        => programs = programs + p.program
-        case p: ProgramUpdated      => programs = programs.filterNot(_.id == p.program.id) + p.program
-        case _                      =>
-      }
+      case f: FacultyAdded => faculties = faculties + f.faculty
+      case f: FacultyUpdated => faculties = faculties.filterNot(_.id == f.faculty.id) + f.faculty
+      case d: DepartmentAdded => departments = departments + d.department
+      case d: DepartmentUpdated => departments = departments.filterNot(_.id == d.department.id) + d.department
+      case c: CourseAdded => courses = courses + c.course
+      case c: CourseUpdated => courses = courses.filterNot(_.id == c.course.id) + c.course
+      case p: ProgramAdded => programs = programs + p.program
+      case p: ProgramUpdated => programs = programs.filterNot(_.id == p.program.id) + p.program
+      case _ =>
+    }
 
-    var faculties   = Set[Faculty]()
+    var faculties = Set[Faculty]()
     var departments = Set[Department]()
-    var courses     = Set[Course]()
-    var programs    = Set[Program]()
+    var courses = Set[Course]()
+    var programs = Set[Program]()
   }
 
-  sealed trait OrganizationEntity {
-    val id: String
-    val title: String
-    val titleTr: Option[String]
-    val org: Option[String]
-  }
-
-  case class Faculty
-  (
-    id: String,
-    title: String,
-    titleTr: Option[String],
-    org: Option[String],
-    isActive: Option[Boolean] = Some(true)
-  ) extends OrganizationEntity
-
-  case class Department
-  (
-    id: String,
-    facultyId: String,
-    title: String,
-    titleTr: Option[String],
-    org: Option[String],
-    isActive: Option[Boolean] = Some(true)
-  ) extends OrganizationEntity
-
-  case class Course
-  (
-    id: String,
-    departmentId: String,
-    facultyId: String,
-    title: String,
-    titleTr: Option[String],
-    remarks: Option[String],
-    org: Option[String],
-    isActive: Option[Boolean] = Some(true)
-  ) extends OrganizationEntity
-
-  case class Program
-  (
-    id: String,
-    facultyId: String,
-    terms: Int,
-    creditHours: BigDecimal,
-    title: String,
-    titleTr: Option[String],
-    org: Option[String],
-    isActive: Option[Boolean] = Some(true)
-  ) extends OrganizationEntity
 }

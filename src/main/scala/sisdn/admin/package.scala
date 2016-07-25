@@ -1,7 +1,7 @@
 package sisdn
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import sisdn.admin.Organization.{Program, Course, Department, Faculty}
+import sisdn.common.{Program, Course, Department, Faculty}
 import spray.json.DefaultJsonProtocol
 
 package object admin {
