@@ -84,7 +84,7 @@ object AdminRoutes {
     case SisdnNotFound(id) => complete(StatusCodes.NotFound)
   }
 
-  def authorizeAdmin(user: User, entity: OrganizationEntity): Boolean = entity match {
+  def authorizeAdmin(user: User, entity: OrgEntity): Boolean = entity match {
     case e:Faculty => user.claims.exists(_.contains("admin_" + e.org.get))
 
     case e: Department => user.claims.exists(c => c.contains("admin_" + e.org.get) ||

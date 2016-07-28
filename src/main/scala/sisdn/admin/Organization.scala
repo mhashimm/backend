@@ -1,8 +1,10 @@
 package sisdn.admin
 
-import akka.actor.{ActorSystem, ActorLogging, Props}
+import akka.actor.{ActorLogging, ActorSystem, Props}
 import akka.persistence.PersistentActor
 import sisdn.common._
+
+import scala.annotation.tailrec
 
 class Organization(id: String) extends PersistentActor with ActorLogging {
 
@@ -17,6 +19,8 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
   }
 
   override def receiveCommand: Receive = {
+    case OrgValidCmd(entities) => sender() ! validateEntities(entities)
+
     case AddFaculty(id, user, faculty) =>
       if (state.faculties.map(_.id).contains(faculty.id)) {
         sender() ! SisdnInvalid(id, "Duplicate faculty")
@@ -131,6 +135,23 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
       }
     }
   }
+
+  def validateEntities(entities: List[OrgEntity]): Boolean = {
+    @tailrec
+    def recurse(list: List[OrgEntity]): Boolean = list match {
+      case _ if list.isEmpty => true
+      case x :: xs => entityIsValid(x) && recurse(xs)
+    }
+    if (entities.isEmpty) false
+    else recurse(entities)
+  }
+
+  def entityIsValid(entity: OrgEntity) : Boolean = entity match {
+    case e: Faculty => state.faculties.find(p => p.id == entity.id).exists(_.isActive.get)
+    case e: Department => state.departments.find(p => p.id == entity.id).exists(_.isActive.get)
+    case e: Course => state.courses.find(p => p.id == entity.id).exists(_.isActive.get)
+    case e: Program => state.programs.find(p => p.id == entity.id).exists(_.isActive.get)
+  }
 }
 
 object Organization {
@@ -138,7 +159,7 @@ object Organization {
 
   sealed trait OrgCmd extends ObjectWithId {
     val user: User;
-    val entity: OrganizationEntity
+    val entity: OrgEntity
   }
 
   case class AddFaculty(id: String, user: User, entity: Faculty) extends OrgCmd

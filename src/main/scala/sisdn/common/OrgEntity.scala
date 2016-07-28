@@ -1,6 +1,6 @@
 package sisdn.common
 
-sealed trait OrganizationEntity {
+sealed trait OrgEntity {
   val id: String
   val title: String
   val titleTr: Option[String]
@@ -14,7 +14,7 @@ case class Faculty
   titleTr: Option[String],
   org: Option[String],
   isActive: Option[Boolean] = Some(true)
-) extends OrganizationEntity
+) extends OrgEntity
 
 case class Department
 (
@@ -24,7 +24,7 @@ case class Department
   titleTr: Option[String],
   org: Option[String],
   isActive: Option[Boolean] = Some(true)
-) extends OrganizationEntity
+) extends OrgEntity
 
 case class Course
 (
@@ -36,7 +36,7 @@ case class Course
   remarks: Option[String],
   org: Option[String],
   isActive: Option[Boolean] = Some(true)
-) extends OrganizationEntity
+) extends OrgEntity
 
 case class Program
 (
@@ -48,4 +48,4 @@ case class Program
   titleTr: Option[String],
   org: Option[String],
   isActive: Option[Boolean] = Some(true)
-) extends OrganizationEntity
+) extends OrgEntity

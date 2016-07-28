@@ -81,4 +81,47 @@ class AdminOrganizationSpecs(_system: ActorSystem) extends TestKit(_system) with
     result shouldEqual Some("test")
     state.departments.size shouldEqual 1
   }
+
+  it should "Positively validate a list of orgEntities" in {
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
+    adminOrg ! AddFaculty("1", user, faculty)
+    expectMsg(SisdnCreated("1"))
+    adminOrg ! AddDepartment("1", user, department.copy(facultyId = faculty.id))
+    expectMsg(SisdnCreated("1"))
+
+    adminOrg ! OrgValidCmd(List(department, faculty))
+
+    expectMsg(true)
+  }
+
+  it should "Negatively validate a list of orgEntities for non-existing Entities" in {
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
+    val uid = uuid
+    adminOrg ! AddFaculty("1", user, faculty.copy(id = uid, isActive = Some(true)))
+    expectMsg(SisdnCreated("1"))
+
+    adminOrg ! OrgValidCmd(List(faculty.copy(id = uuid, isActive = Some(true))))
+
+    expectMsg(false)
+  }
+
+  it should "Negatively validate a list of orgEntities for org with no entities" in {
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
+
+    adminOrg ! OrgValidCmd(List(faculty))
+
+    expectMsg(false)
+  }
+
+  it should "Negatively validate a list of orgEntities for inactive Entities" in {
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
+    val uid = uuid
+    val f = faculty.copy(id = uid, isActive = Some(false))
+    adminOrg ! AddFaculty("1", user, f)
+    expectMsg(SisdnCreated("1"))
+
+    adminOrg ! OrgValidCmd(List(f))
+
+    expectMsg(false)
+  }
 }
