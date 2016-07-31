@@ -22,13 +22,13 @@ class AdminOrganizationSpecs(_system: ActorSystem) extends TestKit(_system) with
 
 
   "AddFaculty" should "Accept valid entry" in {
-    val adminOrg = system.actorOf(Organization.props("org"))
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
     adminOrg ! AddFaculty("uniq", user, faculty)
     expectMsg(SisdnCreated("uniq"))
   }
 
   it should "fail for duplicate faculty addition" in {
-    val adminOrg = system.actorOf(Organization.props("org"))
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
     val fac = faculty.copy(id = uuid)
     adminOrg ! AddFaculty("1", user, fac)
     expectMsg(SisdnCreated("1"))
@@ -37,7 +37,7 @@ class AdminOrganizationSpecs(_system: ActorSystem) extends TestKit(_system) with
   }
 
   "UpdateFaculty" should "Successfully update existing faculty" in {
-    val adminOrg = system.actorOf(Organization.props("org"))
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
     val fac = faculty.copy(id = uuid)
     adminOrg ! AddFaculty("1", user, fac)
     expectMsg(SisdnCreated("1"))
@@ -46,19 +46,19 @@ class AdminOrganizationSpecs(_system: ActorSystem) extends TestKit(_system) with
   }
 
   it should "Fail update of non-existing faculty" in {
-    val adminOrg = system.actorOf(Organization.props("org"))
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
     adminOrg ! UpdateFaculty("1", user, faculty.copy(id = "non-existing"))
     expectMsg(SisdnNotFound("1"))
   }
 
   "Add Department" should "fail if added with non-existing faculty" in {
-    val adminOrg = system.actorOf(Organization.props("org"))
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
     adminOrg ! AddDepartment("1", user, department)
     expectMsg(SisdnInvalid("1", "Faculty does not exist or is inactive"))
   }
 
   it should "fail if added with inactive faculty" in {
-    val adminOrg = system.actorOf(Organization.props("org"))
+    val adminOrg = system.actorOf(Organization.props("org" + uuid))
     val uid = uuid
     adminOrg ! AddFaculty("1", user, faculty.copy(id = uid, isActive = Some(false)))
     expectMsg(SisdnCreated("1"))

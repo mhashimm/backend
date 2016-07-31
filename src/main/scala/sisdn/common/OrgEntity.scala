@@ -49,3 +49,5 @@ case class Program
   org: Option[String],
   isActive: Option[Boolean] = Some(true)
 ) extends OrgEntity
+
+case class OrgValidCmd(entities: List[OrgEntity])
