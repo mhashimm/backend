@@ -136,6 +136,7 @@ class Organization(id: String) extends PersistentActor with ActorLogging {
     }
   }
 
+  // TODO I definitely need to investigate 'Scalaz' Validation for this
   def validateEntities(entities: List[OrgEntity]): Boolean = {
     @tailrec
     def recurse(list: List[OrgEntity]): Boolean = list match {

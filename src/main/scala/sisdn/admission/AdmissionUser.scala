@@ -2,7 +2,7 @@ package sisdn.admission
 
 import akka.actor.{ActorLogging, ActorRef, Props}
 import akka.persistence.PersistentActor
-import sisdn.common.{SisdnCreated, SisdnDuplicate, SisdnInvalid, User, uuid}
+import sisdn.common.{SisdnCreated, SisdnDuplicate, SisdnInvalid, User, UserEvt, uuid}
 
 class AdmissionUser(userId: String, admitter: ActorRef)
   extends PersistentActor with ActorLogging {
@@ -36,9 +36,9 @@ class AdmissionUser(userId: String, admitter: ActorRef)
   }
 
   def receiveCommand = {
-    case admission: Admission => {
+    case admission: Admission =>
       if(!state.admissions.contains(admission.id)) {
-        persist(AdmissionStatusUpdateEvt(admission.id, AdmissionStatus.Pending, "")) { evt =>
+        persist(AdmissionStatusUpdateEvt(admission.id, AdmissionStatus.Pending, "", "admission")) { evt =>
           sender() ! SisdnCreated(admission.id)
           admitter ! SubmittedEvt(
             NonEmptyAdmissionData(
@@ -52,7 +52,6 @@ class AdmissionUser(userId: String, admitter: ActorRef)
       }
       else
         sender() ! SisdnDuplicate(admission.id, "")
-    }
 
     case _ => sender() ! SisdnInvalid("", "Unknown command")
   }
@@ -63,16 +62,16 @@ object AdmissionUser {
 
   case class Admission(id: String, user: User, student: Student)
 
-  case class AdmissionStatusUpdateEvt(id: String, status: AdmissionStatus.Value, remarks: String)
+  case class AdmissionStatusUpdateEvt(id: String, status: AdmissionStatus.Value,
+                                      remarks: String, tag: String) extends UserEvt
 
   class UserState {
     var admissions = Map[String, AdmissionStatusUpdateEvt]()
 
     def update(data: AdmissionStatusUpdateEvt) = {
       admissions = admissions + admissions.get(data.id).map { a =>
-        (a.id, AdmissionStatusUpdateEvt(a.id, data.status, data.remarks))
+        (a.id, AdmissionStatusUpdateEvt(a.id, data.status, data.remarks, "admission"))
       }.get
     }
   }
-
 }

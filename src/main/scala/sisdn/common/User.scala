@@ -7,3 +7,9 @@ case class User(
   faculties: Option[Set[String]],
   claims: Option[Set[String]]
 )
+
+trait UserEvt {
+  val id: String
+  val remarks: String
+  val tag: String
+}
